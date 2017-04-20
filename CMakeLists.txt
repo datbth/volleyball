@@ -3,9 +3,9 @@ project(game)
 
 set(CMAKE_C_STANDARD 99)
 
-set(SOURCE_FILES main.c)
+set(SOURCE_FILES main.c player.c player.h main.h)
 add_executable(game ${SOURCE_FILES})
-add_executable(texture textureLoading.c)
+add_executable(sample 29_circular_collision_detection.cpp)
 
 INCLUDE(FindPkgConfig)
 
@@ -15,3 +15,4 @@ PKG_SEARCH_MODULE(SDL2MIXER REQUIRED SDL2_mixer>=2.0.0)
 
 INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(game ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${SDL2MIXER_LIBRARIES})
+TARGET_LINK_LIBRARIES(sample ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${SDL2MIXER_LIBRARIES})
