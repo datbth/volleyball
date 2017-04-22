@@ -8,7 +8,7 @@
 #include <SDL2/SDL_scancode.h>
 
 typedef struct {
-    int pos, speed, minY, maxY, veloX, veloY, X, Y, size, jumping;
+    int pos, speed, minY, maxY, veloX, veloY, X, Y, size;
     SDL_Keycode up, left, right;
     SDL_Texture * icon;
 
@@ -18,8 +18,9 @@ Player *createPlayer(int pos, SDL_Keycode up, SDL_Keycode left, SDL_Keycode righ
 
 
 void setVeloX(Player *player, int veloX);
-void setVeloY(Player *player);
-void updateXY(Player * player, int gravity);
+void setVeloY(Player *player, int veloY);
+void updateXY(Player * player);
+void move(Player * player, int left, int up, int right);
 
 
 #endif //GAME_PLAYER_H

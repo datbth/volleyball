@@ -4,6 +4,7 @@
 
 #include <SDL2/SDL_system.h>
 #include "player.h"
+#include "stdbool.h"
 #include "main.h"
 
 
@@ -22,14 +23,13 @@ Player *createPlayer(int pos, SDL_Keycode up, SDL_Keycode left, SDL_Keycode righ
         temp->up = up;
         temp->left = left;
         temp->right = right;
-        temp->size = 50;
         temp->icon = icon;
-        temp->speed = 50;
+        temp->size = 100;
+        temp->speed = 10;
         temp->minY = SCREEN_HEIGHT - temp->size;
-        temp->maxY = temp->minY-100;
+        temp->maxY = temp->minY-temp->size;
         temp->veloX = 0;
         temp->veloY = 0;
-        temp->jumping = 0;
         temp->X = 0;
         temp->Y = 0;
         return temp;
@@ -41,25 +41,54 @@ void setVeloX(Player *player, int veloX){
     player->veloX = veloX;
 }
 
-void setVeloY(Player *player){
-    if(player->jumping == 1){
-        if(player->Y <= player->maxY) player->veloY = 
-    } else {
+void setVeloY(Player *player, int veloY){
+    // check if player is on ground
+    // if on ground -> can jump
+    //      if up is pressed -> increase vel
+    //      else -> nothing
 
+    // if not on ground -> can not jump
+    //      check if player is falling
+    //      if player is falling -> return
+    //      if player is not falling
+    //          if up is pressed -> increase vel
+    //          else -> vel = 0
+
+    bool isOnGround = player->Y == player->minY;
+    if(isOnGround){
+        if(veloY != 0) {
+            player->veloY = -veloY;
+        }
+    } else {
+        if(player->Y < player->maxY) {  //if player jumps too high
+//            printf("13123121\n");
+            player->veloY = 0;
+        }
+        bool isFalling = player->veloY >= 0;
+        if(!isFalling){
+            if (veloY != 0) player->veloY = -veloY;
+            else player->veloY = 0;
+        }
     }
-    if(player->Y == player->minY) player->veloY = veloY;
-    else player->veloY = 0;
 }
 
-void updateXY(Player * player, int gravity){
-    int dirY = player->veloY + gravity, Y = player->Y,
-            dirX = player->veloX + player->X;
+void updateXY(Player * player){
+    player->X += player->veloX;
+    player->Y += (player->veloY + gravity);
 
-    //prevent the player go out of the Screen width
-    if (dirX >= 0 && dirX <= SCREEN_WIDTH-player->size) player->X += player->veloX;
-
-    // prevent players go under ground or jump too high
-    if (player->jumping == 1 && (Y+dirY) > player->maxY ) player->Y += dirY;   //if player is jumping and it does not jump too high then let it jump
-    else if (player->Y < player->minY) player->Y += dirY;      //if player is not jumping and it still on air, let it fall
     if(player->Y > player->minY) player->Y = player->minY;
+//    if(player->Y < player->maxY) player->Y = player->maxY;
+    if(player->X < 0) player->X = 0;
+    if(player->X > SCREEN_WIDTH-player->size) player->X = SCREEN_WIDTH-player->size;
+}
+
+void move(Player* player, int left, int up, int right){
+    int veloX = 0, veloY = 0, speed = player->speed;
+    veloX += (left == 1)? -speed : 0;
+    veloX += (right == 1)? speed : 0;
+
+    veloY += (up == 1)? speed : 0;
+
+    setVeloX(player, veloX);
+    setVeloY(player, veloY);
 }
