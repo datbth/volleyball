@@ -88,12 +88,6 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/gameTimer.c">
-			<Option target="game"/>
-		</Unit>
-		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/gameTimer.h">
-			<Option target="game"/>
-		</Unit>
 		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/main.c">
 			<Option target="game"/>
 		</Unit>

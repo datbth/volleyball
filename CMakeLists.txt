@@ -4,7 +4,7 @@ project(game)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${game_SOURCE_DIR}/findsdl2")
 
-set(SOURCE_FILES main.c gameTimer.h gameTimer.c)
+set(SOURCE_FILES main.c)
 add_executable(game ${SOURCE_FILES} player.c player.h main.h)
 
 find_package(SDL2 REQUIRED sdl2)

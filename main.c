@@ -7,6 +7,7 @@ and may not be redistributed without written permission.*/
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
+#include <time.h>
 #include "player.h"
 #include "main.h"
 #define MAXSAMPLE 100
@@ -15,9 +16,9 @@ and may not be redistributed without written permission.*/
 int SCREEN_WIDTH = 640;
 int SCREEN_HEIGHT = 480;
 SDL_Renderer *renderer;
-int gravity = 10;
-const int SCREEN_FPS = 60;
-const int SCREEN_TICKS_PER_FRAME = 1000/60;
+int gravity = 100;
+const int SCREEN_FPS = 80;
+const float TIME_PER_FRAME = 1000/SCREEN_FPS;
 const Uint8* currentKeyStates;
 int tickIndex = 0;
 int tickSum = 0;
@@ -119,29 +120,51 @@ int main(int argc, char *args[]) {
             quit = 1;
     }
 
-    // game loop
+  	// get current time
+  	// if curtime - lasttime > interval (frametime)
+  	// -> run loop
 
+    float lastTime = 0;
+    float currentTime;
+
+	int counter = 0;
     while (quit == 0) {
-        while (SDL_PollEvent(&event) != 0) {
-            if (handleKeys(players, 2) == 1) quit = 1;
+        currentTime = clock() / (CLOCKS_PER_SEC / 1000);
+//	  printf("%lu\n", clock());
+//	  printf("%lu\n", currentTime);
+//	  if (counter++ == 2) break;
+
+        if (currentTime - lastTime < TIME_PER_FRAME)
+        {
+            continue;
         }
 
-        // update position
+    // game loop
+	  do {
+		if (handleKeys(players, 2) == 1) quit = 1;
+	  }
+	  while (SDL_PollEvent(&event) != 0);
 
-        for (int i = 0; i < 2; ++i) {
-            SDL_RenderClear(renderer);
+
+        // update position
+	  	SDL_RenderClear(renderer);
+        for (int i = 0; i < 2; ++i)
+		{
 
             Player * currentPlayer = players[i];
-            updateXY(players[i]);
-            SDL_Rect position = {currentPlayer->X, currentPlayer->Y, currentPlayer->size, currentPlayer->size};
+            updateXY(players[i], currentTime);
+//		  printf("currentTime: %lu \n", currentTime);
 
-            SDL_RenderCopyEx(renderer, currentPlayer->icon, &fillRect, &position, 0, 0, 0);
-            SDL_RenderPresent(renderer);
+		  SDL_Rect position = { ceil(currentPlayer->X), ceil(currentPlayer->Y), currentPlayer->size, currentPlayer->size};
+
+            SDL_RenderCopyEx(renderer, currentPlayer->icon, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
 
 //            printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
         }
+	  	SDL_RenderPresent(renderer);
 //        printf("\n");
-        SDL_Delay(25);
+
+        lastTime = currentTime;
     }
 
 
