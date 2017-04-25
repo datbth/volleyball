@@ -1,18 +1,19 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.7)
 project(game)
 
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${game_SOURCE_DIR}/findsdl2")
 
-set(SOURCE_FILES main.c player.c player.h main.h)
-add_executable(game ${SOURCE_FILES})
-add_executable(sample 29_circular_collision_detection.cpp)
+set(SOURCE_FILES main.c gameTimer.h gameTimer.c)
+add_executable(game ${SOURCE_FILES} player.c player.h main.h)
 
-INCLUDE(FindPkgConfig)
+find_package(SDL2 REQUIRED sdl2)
+find_package(SDL2_image REQUIRED sdl2_image)
+find_package(SDL2_mixer REQUIRED sdl2_mixer )
 
-PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
-PKG_SEARCH_MODULE(SDL2IMAGE REQUIRED SDL2_image>=2.0.0)
-PKG_SEARCH_MODULE(SDL2MIXER REQUIRED SDL2_mixer>=2.0.0)
-
-INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIRS})
-TARGET_LINK_LIBRARIES(game ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${SDL2MIXER_LIBRARIES})
-TARGET_LINK_LIBRARIES(sample ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${SDL2MIXER_LIBRARIES})
+include_directories(${SDL2_INCLUDE_DIR}
+        ${SDL2_IMAGE_INCLUDE_DIR}
+        ${SDL2_MIXER_INCLUDE_DIR})
+target_link_libraries(game ${SDL2_LIBRARY}
+        ${SDL2_IMAGE_LIBRARIES}
+        ${SDL2_MIXER_LIBRARIES})

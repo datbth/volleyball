@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="game"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\findsdl2\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/Users/nangtrongvuon/Documents/Programming Projects/volleyball"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/Users/nangtrongvuon/Documents/Programming Projects/volleyball"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/Users/nangtrongvuon/Documents/Programming Projects/volleyball"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="game">
+				<Option output="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/game" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/nangtrongvuon/Documents/Programming Projects/volleyball"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Library/Frameworks/SDL2.framework/Headers"/>
+					<Add directory="/Library/Frameworks/SDL2_image.framework/Headers"/>
+					<Add directory="/Library/Frameworks/SDL2_mixer.framework/Headers"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/bin/../include/c++/v1"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/bin/../lib/clang/8.1.0/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 game"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="game/fast">
+				<Option output="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/game" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/nangtrongvuon/Documents/Programming Projects/volleyball"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Library/Frameworks/SDL2.framework/Headers"/>
+					<Add directory="/Library/Frameworks/SDL2_image.framework/Headers"/>
+					<Add directory="/Library/Frameworks/SDL2_mixer.framework/Headers"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/bin/../include/c++/v1"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/bin/../lib/clang/8.1.0/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 game/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/nangtrongvuon/Documents/Programming\ Projects/volleyball/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/gameTimer.c">
+			<Option target="game"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/gameTimer.h">
+			<Option target="game"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/main.c">
+			<Option target="game"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/main.h">
+			<Option target="game"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/player.c">
+			<Option target="game"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/player.h">
+			<Option target="game"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/findsdl2/FindSDL2.cmake">
+			<Option virtualFolder="CMake Files\findsdl2\"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/findsdl2/FindSDL2_image.cmake">
+			<Option virtualFolder="CMake Files\findsdl2\"/>
+		</Unit>
+		<Unit filename="/Users/nangtrongvuon/Documents/Programming Projects/volleyball/findsdl2/FindSDL2_mixer.cmake">
+			<Option virtualFolder="CMake Files\findsdl2\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

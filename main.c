@@ -9,16 +9,32 @@ and may not be redistributed without written permission.*/
 #include <SDL2/SDL_mixer.h>
 #include "player.h"
 #include "main.h"
+#define MAXSAMPLE 100
 
 //Screen dimension constants
 int SCREEN_WIDTH = 640;
 int SCREEN_HEIGHT = 480;
 SDL_Renderer *renderer;
-int gravity = 5;
+int gravity = 10;
 const int SCREEN_FPS = 60;
 const int SCREEN_TICKS_PER_FRAME = 1000/60;
 const Uint8* currentKeyStates;
+int tickIndex = 0;
+int tickSum = 0;
+int tickList[MAXSAMPLE];
 
+double calculateAverageTick(int newTick)
+{
+    tickSum -= tickList[tickIndex];
+    tickSum += newTick;
+    tickList[tickIndex] = newTick;
+    if (++tickSum == MAXSAMPLE)
+    {
+        tickIndex = 0;
+    }
+
+    return (double) tickSum / MAXSAMPLE;
+}
 
 SDL_Texture *loadTexture(char *path, SDL_Renderer* renderer) {
     SDL_Surface *loadedSurface = IMG_Load(path);    //  load PNG image
@@ -59,7 +75,7 @@ SDL_Window *init() {   //create window
 
 
 int handleKeys(Player *players[], int playerNum){
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 2; ++i) {
         Player* player = players[i];
         move(player,
              currentKeyStates[player->left],
@@ -80,34 +96,41 @@ int main(int argc, char *args[]) {
     SDL_Window *window = init();
     if (window == NULL) return 1;
 
+
+
     // setup controller
     currentKeyStates = SDL_GetKeyboardState( NULL );
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == NULL) return 2;
     SDL_Rect fillRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
     // create player
     Player * player1 = createPlayer(1, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D, "pics/hacker_icon.png");
-    Player * player2 = createPlayer(2, SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M, "pics/hacker_icon.png");
-    Player * player3 = createPlayer(3, SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9, "pics/hacker_icon.png");
+//    Player * player2 = createPlayer(2, SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M, "pics/hacker_icon.png");
+//    Player * player3 = createPlayer(3, SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9, "pics/hacker_icon.png");
     Player * player4 = createPlayer(4, SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, "pics/hacker_icon.png");
-    Player *players[4] = {player1, player2, player3, player4};
+    Player *players[2] = {player1, player4};
 
     // validate players
     int quit = 0;
-    for (int j = 0; j < 4; ++j) if (players[j] == NULL) {
+    for (int j = 0; j < 2; ++j) if (players[j] == NULL) {
             printf("%i is NULL", players[j]->pos);
             quit = 1;
     }
 
+    // game loop
+
     while (quit == 0) {
         while (SDL_PollEvent(&event) != 0) {
-            if (handleKeys(players, 4) == 1) quit = 1;
+            if (handleKeys(players, 2) == 1) quit = 1;
         }
+
         // update position
-        SDL_RenderClear(renderer);
-        for (int i = 0; i < 4; ++i) {
+
+        for (int i = 0; i < 2; ++i) {
+            SDL_RenderClear(renderer);
+
             Player * currentPlayer = players[i];
             updateXY(players[i]);
             SDL_Rect position = {currentPlayer->X, currentPlayer->Y, currentPlayer->size, currentPlayer->size};
@@ -123,9 +146,9 @@ int main(int argc, char *args[]) {
 
 
     //Free resources and close SDL ***
-    for (int i = 0; i < 4; i++ ) free(players[i]);
+    for (int i = 0; i < 2; i++ ) free(players[i]);
     SDL_DestroyRenderer(renderer); renderer = NULL;
-    SDL_DestroyWindow(window);window = NULL;
+    SDL_DestroyWindow(window); window = NULL;
 
     //Quit SDL subsystems
     IMG_Quit();
