@@ -116,14 +116,14 @@ int main(int argc, char *args[]) {
 //    players[3] = createPlayer(object_p4, 500, SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT);
 
     Object* object_b1= createObject(4, SCREEN_WIDTH/2, 0, 20, 20, "../pics/ball1.png");
-    Ball* ball = createBall(object_b1);
+//    Ball* ball = createBall(object_b1);
 //    Player* players[] = {p1, p2, p3, p4};
 
     // validate players and set their position
     int quit = 0;
     for (int j = 0; j < numPlayer; ++j){
         if (players[j] == NULL || players[j]->object == NULL) {
-            printf("%i is NULL\n", players[j]->object->id);
+//            printf("%i is NULL\n", players[j]->object->id);
             quit = 1;
         } else {
             if (j == 3) {
@@ -159,7 +159,7 @@ int main(int argc, char *args[]) {
         SDL_RenderClear(renderer);
         //update logic position
         for (int i = 0; i < numPlayer; ++i) updateXY(players[i]->object, currentTime);
-        updateXY(ball->object, currentTime);
+//        updateXY(ball->object, currentTime);
         //check collision and correct their positions
         for (int i = 0; i < numPlayer; ++i) {
             Player *currentPlayer = players[i];
@@ -169,14 +169,13 @@ int main(int argc, char *args[]) {
             SDL_Rect position = {(int) ceil(currentPlayer->object->X), (int) ceil(currentPlayer->object->Y), currentPlayer->object->W, currentPlayer->object->H};
             SDL_RenderCopyEx(renderer, currentPlayer->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
         }
-        checkCollision(ball->object, players);
-        SDL_Rect position = {(int) ceil(ball->object->X), (int) ceil(ball->object->Y), ball->object->W, ball->object->H};
-        SDL_RenderCopyEx(renderer, ball->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
+//        checkCollision(ball->object, players);
+//        SDL_Rect position = {(int) ceil(ball->object->X), (int) ceil(ball->object->Y), ball->object->W, ball->object->H};
+//        SDL_RenderCopyEx(renderer, ball->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
 
         SDL_RenderPresent(renderer);
         lastTime = currentTime;
     }
-
 
     //Free resources and close SDL ***
     printf("free player ");

@@ -40,6 +40,8 @@ Object *createObject(int id, float X, float Y, int W, int H, char* imagePath){
     object->veloY = 0;
     object->accelY = 0;
     object->lastMoveTime = 0;
+
+  return object;
 }
 
 void freeObject(Object * object){
@@ -73,6 +75,10 @@ Player *createPlayer(Object* object,int speed, SDL_Keycode up, SDL_Keycode left,
     return player;
 }
 void freePlayer(Player * player){
+  	if (player == NULL)
+	{
+	  return;
+	}
     freeObject(player->object);
     free(player);
 }
