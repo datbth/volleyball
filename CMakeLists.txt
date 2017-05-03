@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/cmake-build-debug)
 
 set(SOURCE_FILES main.c object.c)
 add_executable(game ${SOURCE_FILES} )
-#add_executable(sample 25_capping_frame_rate.cpp)
+add_executable(sample 29_circular_collision_detection.cpp)
 
 
 find_package(SDL2 REQUIRED sdl2)
@@ -29,5 +29,9 @@ include_directories(${SDL2_INCLUDE_DIR}
         ${SDL2_MIXER_INCLUDE_DIR})
 
 target_link_libraries(game -lm ${SDL2_LIBRARY}
+        ${SDL2_IMAGE_LIBRARIES}
+        ${SDL2_MIXER_LIBRARIES})
+
+target_link_libraries(sample -lm ${SDL2_LIBRARY}
         ${SDL2_IMAGE_LIBRARIES}
         ${SDL2_MIXER_LIBRARIES})

@@ -36,12 +36,19 @@ typedef struct {
     Object * object;
 } Ball;
 
+typedef struct {
+    Object * object;
+} Wall;
+
 Object *createObject(int id, float X, float Y,int W, int H, char* imagePath);
 Player *createPlayer(Object* object, int speed, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
 Ball *createBall(Object * object);
+Wall *createWall(Object * object);
+
 void freeObject(Object * object);
 void freePlayer(Player * player);
 void freeBall(Ball * ball);
+void freeWall(Wall * wall);
 
 void setVeloX(Object *player, float veloX);
 
@@ -52,10 +59,11 @@ void updateXY(Object *object, float newFrameTime);
 void move(Player *player, int left, int up, int right);
 bool setPlayerOnGround(Player *player);
 bool isCircleCollided(Object *A, Object *B);
+bool isWallCollided(Object *A, Object *B);
 void getCollideXY(float *X, float *Y, Object* A, Object *B);
 void checkCollision(Object * source, Player* players[]);
 bool isMovingCloser(Object * source, Object * target);
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
-float distSquare(Object * source, Object * target);
+float centerDistSquared(Object *source, Object *target);
 
 #endif //GAME_PLAYER_H

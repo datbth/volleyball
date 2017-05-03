@@ -103,7 +103,7 @@ int main(int argc, char *args[]) {
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == NULL) return 2;
-    SDL_Rect fillRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+    SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
     // create player
     Object* object_p1 = createObject(1, SCREEN_WIDTH/2, 0, 100, 100, "../pics/ball1.png");
@@ -115,7 +115,10 @@ int main(int argc, char *args[]) {
 //    players[2] = createPlayer(object_p3, 500, SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9);
 //    players[3] = createPlayer(object_p4, 500, SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT);
 
-    Object* object_b1= createObject(4, SCREEN_WIDTH/2, 0, 20, 20, "../pics/ball1.png");
+  	Object *object_w1 = createObject(3, SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2, 50, SCREEN_HEIGHT / 2, "../pics/wall.png");
+  	Wall *wall = createWall(object_w1);
+
+    Object* object_b1 = createObject(4, SCREEN_WIDTH/2, 0, 20, 20, "../pics/ball1.png");
 //    Ball* ball = createBall(object_b1);
 //    Player* players[] = {p1, p2, p3, p4};
 
@@ -167,11 +170,19 @@ int main(int argc, char *args[]) {
 //            printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
             //update SDL position
             SDL_Rect position = {(int) ceil(currentPlayer->object->X), (int) ceil(currentPlayer->object->Y), currentPlayer->object->W, currentPlayer->object->H};
-            SDL_RenderCopyEx(renderer, currentPlayer->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
+            SDL_RenderCopyEx(renderer, currentPlayer->object->image, &background, &position, 0, 0, SDL_FLIP_NONE);
         }
 //        checkCollision(ball->object, players);
 //        SDL_Rect position = {(int) ceil(ball->object->X), (int) ceil(ball->object->Y), ball->object->W, ball->object->H};
-//        SDL_RenderCopyEx(renderer, ball->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
+//        SDL_RenderCopyEx(renderer, ball->object->image, &background, &position, 0, 0, SDL_FLIP_NONE);
+
+//		SDL_Rect wallRect = { SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, 50, SCREEN_HEIGHT / 2 };
+//		SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0xFF);
+//		SDL_RenderFillRect(renderer, &wallRect);
+
+	  	checkCollision(wall->object, players);
+	  	SDL_Rect wallPosition = {(int) ceil(wall->object->X), (int) ceil(wall->object->Y), wall->object->W, wall->object->H};
+		SDL_RenderCopyEx(renderer, wall->object->image, &background, &wallPosition, 0, 0, SDL_FLIP_NONE);
 
         SDL_RenderPresent(renderer);
         lastTime = currentTime;

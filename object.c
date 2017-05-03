@@ -74,11 +74,32 @@ Player *createPlayer(Object* object,int speed, SDL_Keycode up, SDL_Keycode left,
     player->isCollided = false;
     return player;
 }
+
+Wall *createWall(Object* object)
+{
+  Wall *wall = malloc(sizeof(Wall));
+
+  if (wall == NULL)
+  {
+	freeObject(object);
+	return NULL;
+  }
+
+  wall->object = object;
+  wall->object->wrapper = wall;
+  wall->object->type = OBJECT_WALL;
+  wall->object->isCollided = &isWallCollided;
+
+  return wall;
+
+}
+
 void freePlayer(Player * player){
   	if (player == NULL)
 	{
 	  return;
 	}
+
     freeObject(player->object);
     free(player);
 }
@@ -177,7 +198,7 @@ void move(Player *player, int left, int up, int right) {
 //    }
 //}
 
-float distSquare(Object * source, Object * target){
+float centerDistSquared(Object *source, Object *target){
     float sourceCenterX = source->X + source->W/2, sourceCenterY = source->Y + source->H/2;
     float targetCenterX = target->X + target->W/2, targetCenterY = target->Y + target->H/2;
     float distX = (float) fabs(sourceCenterX - targetCenterX);
@@ -190,8 +211,53 @@ bool isCircleCollided(Object *A, Object *B) {
     if(A->type == OBJECT_WALL) return false;
 
     int rA = A->W / 2, rB = B->W / 2;
-    if (distSquare(A, B) < (rA + rB)*(rA + rB)) return true;
+    if (centerDistSquared(A, B) < (rA + rB)*(rA + rB)) return true;
     else return false;
+}
+
+float distSquared(float x1, float x2, float y1, float y2)
+{
+    float deltaX = x2 - x1;
+    float deltaY = y2 - y1;
+    return deltaY * deltaY + deltaX * deltaX;
+}
+
+bool isWallCollided(Object *A, Object *B)
+{
+	float closestBoxX, closestBoxY = 0;
+
+    /*
+     * Find the closest point's X from A's center to B
+     * If A is to left of B then the closest point is always on the left edge of B and vice versa
+     */
+  	if (A->X < B->X) closestBoxX = B->X;
+
+        // A is to B's right
+	else if (A-> X > B->X + B->W) closestBoxX = B->X + B->W;
+
+        // A is within B's range
+  	else closestBoxX = A->X;
+
+    /*
+     * Find the closest point's Y from A's center to B
+     * If A is above B then the closest point is always on the top edge of B
+     */
+    if (A->Y < B->Y) closestBoxY = B->Y;
+
+        // A is below B
+	else if (A-> Y > B->Y + B->H) closestBoxY = B->Y + B->H;
+
+        // A is within B
+  	else closestBoxY = A->Y;
+
+    if (distSquared(A->X, closestBoxX, A->Y, closestBoxY))
+    {
+        return true;
+    }
+
+    else return false;
+
+
 }
 
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY){
