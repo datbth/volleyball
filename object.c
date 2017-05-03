@@ -40,6 +40,8 @@ Object *createObject(int id, float X, float Y, int W, int H, char* imagePath){
     object->veloY = 0;
     object->accelY = 0;
     object->lastMoveTime = 0;
+
+    return object;
 }
 
 void freeObject(Object * object){
@@ -59,7 +61,7 @@ Player *createPlayer(Object* object,int speed, SDL_Keycode up, SDL_Keycode left,
     player->object = object;
     player->object->wrapper = player;
     player->object->type = OBJECT_PLAYER;
-    player->object->isCollided = &isCircleCollided;
+    player->object->shapeType = SHAPE_CIRCLE;
 
     player->oldX = player->object->X;
     player->oldY = player->object->Y;
@@ -69,7 +71,7 @@ Player *createPlayer(Object* object,int speed, SDL_Keycode up, SDL_Keycode left,
     player->right = right;
     object->speed = speed;
     player->onGround = false;
-    player->isCollided = false;
+    player->object->applyCollision = &applyPlayerCollision;
     return player;
 }
 void freePlayer(Player * player){
@@ -82,7 +84,7 @@ Ball *createBall(Object * object){
     ball->object = object;
     ball->object->type = OBJECT_BALL;
     ball->object->wrapper = ball;
-    ball->object->isCollided = &isCircleCollided;
+    ball->object->shapeType = SHAPE_CIRCLE;
 
     return ball;
 }
@@ -128,9 +130,15 @@ void updateXY(Object *object, float newFrameTime) {
 
     }
         // touched the left side of the screen
-    if (object->X < 0) object->X = 0;
+    if (object->X < 0) {
+        object->X = 0;
+        object->veloX = -object->veloX;
+    }
     // touched the right side of the screen
-    if (object->X > SCREEN_WIDTH - object->W) object->X = SCREEN_WIDTH - object->W;
+    if (object->X > SCREEN_WIDTH - object->W) {
+        object->X = SCREEN_WIDTH - object->W;
+        object->veloX = -object->veloX;
+    }
 
     object->lastMoveTime = newFrameTime;
 
@@ -160,6 +168,25 @@ void move(Player *player, int left, int up, int right) {
     setVeloX(player->object, veloX);
 //    setVeloY(player, accelY);
 
+}
+
+void applyPlayerCollision(Object *playerObj, Object *target){
+    ((Player*)playerObj->wrapper)->isCollided = true;
+
+    if (isMovingCloser(playerObj, target)) {
+//                if(source->veloY>=0) {
+//                    printf(" p%i veloX%f \n",source->id, source->veloX);
+//                    printf("%i move to %i with velo X%f, Y%f. \n", source->id, target->id, source->veloX, source->veloY);
+//                }
+        reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY),
+                                 target->X - playerObj->X, target->Y - playerObj->Y);
+//                if(source->veloY != 0)printf("reflected velo X%f, Y%f. \n\n", source->veloX, source->veloY);
+    }else {
+//                if(source->veloY>=0) {
+//                    printf(" p%i veloX%f \n",source->id, source->veloX);
+//                    printf("%i move away %i with velo X%f, Y%f. \n", source->id, target->id, source->veloX, source->veloY);
+//                }
+    }
 }
 //bool setPlayerOnGround(Player *player){
 //    if (player->object->Y >= SCREEN_HEIGHT - player->object->H) {
@@ -202,28 +229,17 @@ int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, floa
 }
 
 
-void checkCollision(Object * source, Player* players[]){
+void checkCollision(Object * source, Object *target){
 //    printf("source %i", source->id);
     for (int i = 0; i < numPlayer; ++i) {
-        Object * target = players[i]->object;
-        if(target!=source && source->isCollided(source, target)){
-            if(source->type == OBJECT_PLAYER)((Player*)(source->wrapper))->isCollided = true;
-            if(target->type == OBJECT_PLAYER)((Player*)(target->wrapper))->isCollided = true;
-
-            if (isMovingCloser(source, target)) {
-//                if(source->veloY>=0) {
-//                    printf(" p%i veloX%f \n",source->id, source->veloX);
-//                    printf("%i move to %i with velo X%f, Y%f. \n", source->id, target->id, source->veloX, source->veloY);
-//                }
-                reflectVectorAboutVector(&(source->veloX), &(source->veloY),
-                                         target->X - source->X, target->Y - source->Y);
-//                if(source->veloY != 0)printf("reflected velo X%f, Y%f. \n\n", source->veloX, source->veloY);
-            }else {
-//                if(source->veloY>=0) {
-//                    printf(" p%i veloX%f \n",source->id, source->veloX);
-//                    printf("%i move away %i with velo X%f, Y%f. \n", source->id, target->id, source->veloX, source->veloY);
-//                }
-            }
+        if (target == source) continue;
+        bool collided = false;
+        if (target->shapeType == SHAPE_CIRCLE){
+            collided = isCircleCollided(source, target);
+        }
+        if(collided){
+            source->applyCollision(source, target);
+            target->applyCollision(target, source);
 
 //            printf("normal X %f Y %f \n", target->X - source->X, target->Y - source->Y);
 //            if (oldVeloY == 0) source->accelY = 0;
@@ -255,5 +271,6 @@ bool isMovingCloser(Object * source, Object * target){
     float dX = target->X - source->X;
     float dY = target->Y - source->Y;
     float dotProduct = vX*dX + vY*dY;
+    printf("away: %i\n", dotProduct<=0);
     return dotProduct <= 0;
 }

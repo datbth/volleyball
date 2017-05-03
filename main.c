@@ -21,7 +21,9 @@ const int SCREEN_WIDTH = 1366;
 const int SCREEN_HEIGHT = 768;
 const int gravity = 1500;
 const float TIME_PER_FRAME = 1000 / SCREEN_FPS;
+int numObjects = 0;
 Player *players[numPlayer];
+Object *objects[100];
 const Uint8 *currentKeyStates;
 int tickIndex = 0;
 int tickSum = 0;
@@ -87,6 +89,13 @@ int handleKeys() {
     return (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_Q]) ? 1 : 0;
 }
 
+bool isElemInArray(int* arr, int elem, int length){
+    for (int i = 0; i < length; i++){
+        if (elem == arr[i]) return true;
+    }
+    return false;
+}
+
 
 int main(int argc, char *args[]) {
     //The window we'll be rendering to
@@ -111,19 +120,21 @@ int main(int argc, char *args[]) {
 //    Object* object_p3 = createObject(3, SCREEN_WIDTH/2, 600, 100, 100, "../pics/ball3.png");
 //    Object* object_p4 = createObject(4, SCREEN_WIDTH/2, 0, 100, 100, "../pics/ball4.png");
     players[0] = createPlayer(object_p1, 500, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D);
+    objects[numObjects++] = players[0]->object;
     players[1] = createPlayer(object_p2, 500, SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M);
+    objects[numObjects++] = players[1]->object;
 //    players[2] = createPlayer(object_p3, 500, SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9);
 //    players[3] = createPlayer(object_p4, 500, SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT);
 
-    Object* object_b1= createObject(4, SCREEN_WIDTH/2, 0, 20, 20, "../pics/ball1.png");
-    Ball* ball = createBall(object_b1);
+//    Object* object_b1= createObject(4, SCREEN_WIDTH/2, 0, 20, 20, "../pics/ball1.png");
+//    Ball* ball = createBall(object_b1);
 //    Player* players[] = {p1, p2, p3, p4};
 
     // validate players and set their position
     int quit = 0;
     for (int j = 0; j < numPlayer; ++j){
         if (players[j] == NULL || players[j]->object == NULL) {
-            printf("%i is NULL\n", players[j]->object->id);
+            printf("%i is NULL\n", j);
             quit = 1;
         } else {
             if (j == 3) {
@@ -158,20 +169,28 @@ int main(int argc, char *args[]) {
 
         SDL_RenderClear(renderer);
         //update logic position
-        for (int i = 0; i < numPlayer; ++i) updateXY(players[i]->object, currentTime);
-        updateXY(ball->object, currentTime);
+        for (int i = 0; i < numObjects; ++i) updateXY(objects[i], currentTime);
+//        updateXY(ball->object, currentTime);
         //check collision and correct their positions
-        for (int i = 0; i < numPlayer; ++i) {
-            Player *currentPlayer = players[i];
-            checkCollision(players[i]->object, players);
+        int checkedObjIndeces[numObjects];
+        int numCheckedObj = 0;
+        for (int i = 0; i < numObjects; ++i) {
+            Object *currentObj = objects[i];
+            for (int j = 0; j < numObjects; j++){
+                if (i == j || isElemInArray(checkedObjIndeces, j+1, numCheckedObj)){
+                    continue;
+                }
+                checkCollision(objects[i], objects[j]);
+            }
 //            printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
             //update SDL position
-            SDL_Rect position = {(int) ceil(currentPlayer->object->X), (int) ceil(currentPlayer->object->Y), currentPlayer->object->W, currentPlayer->object->H};
-            SDL_RenderCopyEx(renderer, currentPlayer->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
+            SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
+            SDL_RenderCopyEx(renderer, currentObj->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
+            checkedObjIndeces[numCheckedObj++] = i + 1;
         }
-        checkCollision(ball->object, players);
-        SDL_Rect position = {(int) ceil(ball->object->X), (int) ceil(ball->object->Y), ball->object->W, ball->object->H};
-        SDL_RenderCopyEx(renderer, ball->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
+//        checkCollision(ball->object, players);
+//        SDL_Rect position = {(int) ceil(ball->object->X), (int) ceil(ball->object->Y), ball->object->W, ball->object->H};
+//        SDL_RenderCopyEx(renderer, ball->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
 
         SDL_RenderPresent(renderer);
         lastTime = currentTime;
@@ -181,6 +200,7 @@ int main(int argc, char *args[]) {
     //Free resources and close SDL ***
     printf("free player ");
     for (int i = 0; i < numPlayer; i++) {
+        if(players[i])
         printf("%i ", i);
         freePlayer(players[i]);
     }

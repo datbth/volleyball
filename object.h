@@ -8,12 +8,18 @@
 #include <SDL2/SDL_scancode.h>
 #include <stdbool.h>
 
-enum objectType {
+enum ObjectType {
     OBJECT_PLAYER,
     OBJECT_BALL,
     OBJECT_ITEM,
     OBJECT_WALL,
 };
+
+enum ShapeType {
+    SHAPE_CIRCLE,
+    SHAPE_RECTANGLE
+};
+
 typedef struct Object Object;
 
 struct Object {
@@ -21,8 +27,9 @@ struct Object {
     float veloX, veloY, X, Y, lastMoveTime;
     void * wrapper;
     SDL_Texture *image;
-    enum objectType type;
-    bool (*isCollided)(Object *A, Object *B);
+    enum ObjectType type;
+    enum ShapeType shapeType;
+    void (*applyCollision)(Object *A, Object *B);
 };
 
 typedef struct {
@@ -53,8 +60,10 @@ void move(Player *player, int left, int up, int right);
 bool setPlayerOnGround(Player *player);
 bool isCircleCollided(Object *A, Object *B);
 void getCollideXY(float *X, float *Y, Object* A, Object *B);
-void checkCollision(Object * source, Player* players[]);
+void checkCollision(Object * source, Object * target);
 bool isMovingCloser(Object * source, Object * target);
+void applyBallCollision(Object *source, Object *target);
+void applyPlayerCollision(Object *source, Object *target);
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
 float distSquare(Object * source, Object * target);
 
