@@ -6,7 +6,7 @@
 #define GAME_GLOBALVARIABLES_H
 #define MAXSAMPLE 100
 #define SCREEN_FPS 60
-#define numPlayer 4
+#define numPlayer 2
 
 extern const int SCREEN_WIDTH;
 extern const int SCREEN_HEIGHT;
