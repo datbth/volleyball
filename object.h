@@ -72,8 +72,9 @@ void checkCollision(Object * source, Object * target);
 bool isMovingCloser(Object * source, Object * target);
 void applyBallCollision(Object *source, Object *target, float *collisionX, float *collisionY);
 void applyWallCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+void pushOut(Object *playerObj, float collisionX, float collisionY, float targetDistance);
 void applyPlayerCollision(Object *source, Object *target, float *collisionX, float *collisionY);
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
-float centerDistSquared(Object *source, Object *target);
+//float centerDistSquared(Object *source, Object *target);
 
 #endif //GAME_PLAYER_H
