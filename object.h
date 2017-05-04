@@ -23,7 +23,7 @@ enum ShapeType {
 typedef struct Object Object;
 
 struct Object {
-    int id, speed, accelY, W, H;
+    int id, accelY, W, H;
     float veloX, veloY, X, Y, lastMoveTime;
     void * wrapper;
     SDL_Texture *image;
@@ -36,6 +36,7 @@ typedef struct {
     Object *object;
     SDL_Keycode up, left, right;
     float oldX, oldY;
+    int speedX, jumpHeight;
     bool onGround, isCollided;
 } Player;
 
@@ -48,7 +49,7 @@ typedef struct {
 } Wall;
 
 Object *createObject(int id, float X, float Y,int W, int H, char* imagePath);
-Player *createPlayer(Object* object, int speed, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
+Player *createPlayer(Object* object, int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
 Ball *createBall(Object * object);
 Wall *createWall(Object * object);
 

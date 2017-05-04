@@ -29,7 +29,6 @@ Object *createObject(int id, float X, float Y, int W, int H, char* imagePath){
         SDL_DestroyTexture(icon);
         return NULL;
     }
-    object->speed = 0;
     object->id = id;
     object->image = icon;
     object->H = H;
@@ -50,7 +49,7 @@ void freeObject(Object * object){
     free(object);
 }
 
-Player *createPlayer(Object* object,int speed, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right){
+Player *createPlayer(Object* object,int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right){
     if (object == NULL) return NULL;
 //    printf("sizeof Player %lu \n", sizeof(Player));
     Player *player = malloc(sizeof(Player));
@@ -70,7 +69,8 @@ Player *createPlayer(Object* object,int speed, SDL_Keycode up, SDL_Keycode left,
     player->up = up;
     player->left = left;
     player->right = right;
-    object->speed = speed;
+    player->speedX = speedX;
+    player->jumpHeight = jumpHeight;
     player->onGround = false;
     player->object->applyCollision = &applyPlayerCollision;
     return player;
@@ -96,11 +96,7 @@ Wall *createWall(Object* object)
 }
 
 void freePlayer(Player * player){
-    if (player == NULL)
-    {
-        return;
-    }
-
+    if (player == NULL) return;
     freeObject(player->object);
     free(player);
 }
@@ -111,7 +107,6 @@ Ball *createBall(Object * object){
     ball->object->type = OBJECT_BALL;
     ball->object->wrapper = ball;
     ball->object->shapeType = SHAPE_CIRCLE;
-
     return ball;
 }
 
@@ -171,7 +166,7 @@ void updateXY(Object *object, float newFrameTime) {
     if (object->type == OBJECT_PLAYER){
         ((Player*)(object->wrapper))->isCollided = false;
     }
-                printf("|%i| X%f Y%f velX%f velY%f \n  ", object->id, object->X, object->Y, object->veloX, object->veloY);
+//                printf("|%i| X%f Y%f velX%f velY%f \n  ", object->id, object->X, object->Y, object->veloX, object->veloY);
 }
 
 void move(Player *player, int left, int up, int right) {
@@ -182,15 +177,15 @@ void move(Player *player, int left, int up, int right) {
     else if (left == 0 && right == 0) veloX = 0;
 
     if (player->onGround || player->object->veloX == 0){
-        if (left == 1 && right == 0) veloX = -player->object->speed;
-        else if (right == 1 && left == 0) veloX = player->object->speed;
+        if (left == 1 && right == 0) veloX = -player->speedX;
+        else if (right == 1 && left == 0) veloX = player->speedX;
     }
-//    veloX = (right == 1) ? speed : 0;
+//    veloX = (right == 1) ? speedX : 0;
 
     if (up == 1 && player->onGround) {
 //	  veloY -= 50;
         player->object->accelY = -100;
-        player->object->veloY = -675;
+        player->object->veloY = -player->jumpHeight;
         player->onGround = false;
     }
 
@@ -209,6 +204,7 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
         pushOut(playerObj, *collisionX, *collisionY, playerObj->W/2);
 //        playerObj->veloX = 0; playerObj->veloY = 0;
         playerObj->veloX /= 1000; playerObj->veloY /= 1000;
+        printf("|%i| X%f Y%f velX%f velY%f \n  ", playerObj->id, playerObj->X, playerObj->Y, playerObj->veloX, playerObj->veloY);
     }
 
     if (target->type == OBJECT_PLAYER){
@@ -216,17 +212,13 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
                                  target->X - playerObj->X, target->Y - playerObj->Y);
         pushOut(playerObj, target->X + target->W/2, target->Y + target->H/2, playerObj->W);
 //        playerObj->veloX = 0; playerObj->veloY = 0;
-        if (*collisionY > target->Y){
-            playerObj->veloY = 0;
-        }
-        else {
-            playerObj->veloY /= 1000;
-        }
+        if (*collisionY > target->Y) playerObj->veloY = 0;
+        else playerObj->veloY /= 1000;
         playerObj->veloX /= 1000;
 //                if(source->veloY != 0)printf("reflected velo X%f, Y%f. \n\n", source->veloX, source->veloY);
     }
 //    ((Player*)(playerObj->wrapper))->isCollided = false;
-    if (isMovingCloser(playerObj, target)) {
+    if (1<0&&isMovingCloser(playerObj, target)) {
 //                if(source->veloY>=0) {
 //                    printf(" p%i veloX%f \n",source->id, source->veloX);
 //                    printf("%i move to %i with velo X%f, Y%f. \n", source->id, target->id, source->veloX, source->veloY);
@@ -241,7 +233,7 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
 }
 
 bool solveQuadEquation(float a, float b, float c, float *x1, float *x2){
-    printf("a: %f, b: %f, c: %f", a,b,c);
+//    printf("a: %f, b: %f, c: %f", a,b,c);
     float delta = b*b - 4*a*c;
     if (delta < 0){
         return false;
@@ -277,7 +269,7 @@ void pushOut(Object *pushedObj, float stableX, float stableY, float targetDistan
         pushedDistance += 1;
         pushedObj->X += pushedObj->veloX * pushedDistance / veloMagnitude;
         pushedObj->Y += pushedObj->veloY * pushedDistance / veloMagnitude;
-        printf("distance: %f", pushedDistance);
+        printf("pushedDistance: %f", pushedDistance);
     }
 }
 
