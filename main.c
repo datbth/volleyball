@@ -183,12 +183,13 @@ int main(int argc, char *args[]) {
         int checkedObjIndexes[numObjects];
         int numCheckedObj = 0;
         for (int i = 0; i < numObjects; ++i) {
-            Object *currentObj = objects[i];
             for (int j = 0; j < numObjects; j++) {
                 if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj)) {
                     continue;
                 }
+                printf("Checking %i and %i\n", i,j);
                 checkCollision(objects[i], objects[j]);
+                checkedObjIndexes[numCheckedObj++] = i + 1;
             }
         }
         //printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
@@ -199,7 +200,6 @@ int main(int argc, char *args[]) {
             Object *currentObj = objects[k];
             SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
             SDL_RenderCopyEx(renderer, currentObj->image, &background, &position, 0, 0, SDL_FLIP_NONE);
-            checkedObjIndexes[numCheckedObj++] = k + 1;
         }
         SDL_RenderPresent(renderer);
         lastTime = currentTime;

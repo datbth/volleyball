@@ -7,12 +7,6 @@ set(CMAKE_C_STANDARD 99)
 
 set(SOURCE_FILES main.c object.c)
 add_executable(game ${SOURCE_FILES} )
-<<<<<<< HEAD
-#add_executable(sample 25_capping_frame_rate.cpp)
-=======
-#add_executable(sample 29_circular_collision_detection.cpp)
-
->>>>>>> dat
 
 #find_package(SDL2 REQUIRED sdl2)
 #find_package(SDL2_image REQUIRED sdl2_image)
