@@ -213,29 +213,37 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
 
         pushOut(playerObj, *collisionX, *collisionY, playerObj->W/2);
 //        playerObj->veloX = 0; playerObj->veloY = 0;
-        playerObj->veloX /= 10; playerObj->veloY /= 10;
-    } else if (target->type == OBJECT_PLAYER){
-        reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY),
-                                 target->X - playerObj->X, target->Y - playerObj->Y);
-        pushOut(playerObj, target->X + target->W/2, target->Y + target->H/2, playerObj->W);
-//        playerObj->veloX = 0; playerObj->veloY = 0;
         if (*collisionY > target->Y){
             playerObj->veloY = 0;
         }
         else {
-            playerObj->veloY /= 10;
+            playerObj->veloX = 0;
+//            playerObj->veloY /= 10;
         }
         playerObj->veloX /= 10;
+    } else if (target->type == OBJECT_PLAYER){
+        if (isMovingCloser(playerObj, target)) {
+            reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY),
+                                     target->X - playerObj->X, target->Y - playerObj->Y);
+            pushOut(playerObj, target->X + target->W/2, target->Y + target->H/2, playerObj->W);
+//        playerObj->veloX = 0; playerObj->veloY = 0;
+            playerObj->veloX /= 10; playerObj->veloY /= 10;
+
+            float centerToCollisionY = *collisionY - (target->Y + target->H/2);
+            if (centerToCollisionY < 0){
+                ((Player*)(playerObj->wrapper))->onGround = true;
+                ((Player*)(playerObj->wrapper))->isCollided = false;
+            }
 //                if(source->veloY != 0)printf("reflected velo X%f, Y%f. \n\n", source->veloX, source->veloY);
-    }
-//    ((Player*)(playerObj->wrapper))->isCollided = false;
-    if (isMovingCloser(playerObj, target)) {
+        }
 //                if(source->veloY>=0) {
 //                    printf(" p%i veloX%f \n",source->id, source->veloX);
 //                    printf("%i move to %i with velo X%f, Y%f. \n", source->id, target->id, source->veloX, source->veloY);
 //                }
 
-    } else {
+    }
+//    ((Player*)(playerObj->wrapper))->isCollided = false;
+     else {
 //                if(source->veloY>=0) {
 //                    printf(" p%i veloX%f \n",source->id, source->veloX);
 //                    printf("%i move away %i with velo X%f, Y%f. \n", source->id, target->id, source->veloX, source->veloY);
@@ -334,10 +342,10 @@ bool isCircleCollided(Object *A, Object *B, float *collisionX, float *collisionY
     float distX = BCenterX - ACenterX;
     float distY = BCenterY - ACenterY;
     float centerDistSquared = distX * distX + distY * distY;
-//    float centerDist = sqrtf(centerDistSquared);
+    float centerDist = sqrtf(centerDistSquared);
     if (centerDistSquared < (rA + rB)*(rA + rB)) {
-//        *collisionX = ACenterX + distX / centerDist * rA;
-//        *collisionY = ACenterY + distY / centerDist * rA;
+        *collisionX = ACenterX + distX / centerDist * rA;
+        *collisionY = ACenterY + distY / centerDist * rA;
         return true;
     }
     else return false;
