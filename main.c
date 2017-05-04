@@ -22,7 +22,8 @@ const int SCREEN_HEIGHT = 720;
 const int gravity = 1500;
 const float TIME_PER_FRAME = 1000 / SCREEN_FPS;
 int numObjects = 0;
-Player *players[numPlayer];
+int numPlayer = 0;
+Player *players[4];
 Object *objects[100];
 const Uint8 *currentKeyStates;
 int tickIndex = 0;
@@ -31,7 +32,7 @@ int tickList[MAXSAMPLE];
 
 double calculateAverageTick(int newTick) {
     tickSum -= tickList[tickIndex];
-    tickSum += newTick;
+    tickSum += SDL_GetTicks();
     tickList[tickIndex] = newTick;
     if (++tickSum == MAXSAMPLE) {
         tickIndex = 0;
@@ -67,7 +68,7 @@ SDL_Window *init() {
         return false;
     } else {
         //Create window
-        window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        window = SDL_CreateWindow("Volleyball", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                                   SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         if (window == NULL) {
             printf("can't initialize Window%s\n", SDL_GetError());
@@ -77,7 +78,6 @@ SDL_Window *init() {
     }
 }
 
-
 int handleKeys() {
     for (int i = 0; i < numPlayer; ++i) {
         Player *player = players[i];
@@ -86,7 +86,9 @@ int handleKeys() {
              currentKeyStates[player->up],
              currentKeyStates[player->right]);
     }
-    return (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_Q]) ? 1 : 0;
+    if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_Q]) return 1;
+    else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_R]) return 2;
+    else return 0;
 }
 
 bool isElemInArray(int* arr, int elem, int length){
@@ -96,45 +98,51 @@ bool isElemInArray(int* arr, int elem, int length){
     return false;
 }
 
+void resetPosition(){
+    for (int i = 0; i < numPlayer; ++i) {
+        Player *currentPlayer = players[i];
+        currentPlayer->object->X = currentPlayer->object->W*2*i;
+        currentPlayer->object->Y = 0;
+    }
+}
 
 int main(int argc, char *args[]) {
-    //The window we'll be rendering to
-    renderer = NULL;
-    SDL_Texture *texture = NULL;
-    SDL_Event event;
-
     //Start up SDL and create window
     SDL_Window *window = init();
     if (window == NULL) return 1;
+
+    SDL_Event event;
 
     // setup controller
     currentKeyStates = SDL_GetKeyboardState(NULL);
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == NULL) return 2;
-    SDL_Rect fillRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+    SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
     // create player
-    Object* object_p1 = createObject(1, SCREEN_WIDTH/2, 0, 100, 100, "../pics/ball1.png");
-    Object* object_p2 = createObject(2, SCREEN_WIDTH/2, 0, 100, 100, "../pics/ball2.png");
-//    Object* object_p3 = createObject(3, SCREEN_WIDTH/2, 600, 100, 100, "../pics/ball3.png");
-//    Object* object_p4 = createObject(4, SCREEN_WIDTH/2, 0, 100, 100, "../pics/ball4.png");
-    players[0] = createPlayer(object_p1, 500, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D);
-    objects[numObjects++] = players[0]->object;
-    players[1] = createPlayer(object_p2, 500, SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M);
-    objects[numObjects++] = players[1]->object;
-//    players[2] = createPlayer(object_p3, 500, SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9);
-//    players[3] = createPlayer(object_p4, 500, SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT);
+    SDL_Keycode keycode[] = {SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
+                             SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M,
+                             SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9,
+                             SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT};
+    char imagePath[] = "../pics/ball0.png";
+    for (int l = 0; l < 2; l++) {
+        imagePath[12] += 1;
+        Object* object = createObject(1, SCREEN_WIDTH/2, 0, 100, 100, imagePath);
+        players[numPlayer] = createPlayer(object, 250, 675, keycode[l*3+0], keycode[l*3+1], keycode[l*3+2]);
+        objects[numObjects++] = players[numPlayer++]->object;
+    }
 
-//    Object* object_b1= createObject(4, SCREEN_WIDTH/2, 0, 20, 20, "../pics/ball1.png");
-//    Ball* ball = createBall(object_b1);
-//    Player* players[] = {p1, p2, p3, p4};
+    // create wall
+  	Object *object_w1 = createObject(3, SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2, 50, objects[0]->H * 2, "../pics/wall.png");
+  	Wall *wall = createWall(object_w1);
+    objects[numObjects++] = wall->object;
+
 
     // validate players and set their position
     int quit = 0;
     for (int j = 0; j < numPlayer; ++j){
         if (players[j] == NULL || players[j]->object == NULL) {
-            printf("%i is NULL\n", j);
             quit = 1;
         } else {
             if (j == 3) {
@@ -150,48 +158,49 @@ int main(int argc, char *args[]) {
     // -> run loop
 
     float lastTime = 0, currentTime;
-
-    int counter = 0;
     // game loop
-    while (quit == 0) {
-
+    while (quit == 0){
         // get key input
-        do if (handleKeys() == 1) quit = 1;
+        do {
+            int signal = handleKeys();
+            if (signal == 1) quit = 1;
+            else if(signal == 2) resetPosition();
+        }
         while (SDL_PollEvent(&event) != 0);
 
         // lock FPS
         currentTime = SDL_GetTicks();
-        int actualTimePerFrame = (int)currentTime - (int)lastTime;
+        int actualTimePerFrame = (int) currentTime - (int) lastTime;
         if (actualTimePerFrame < TIME_PER_FRAME) {
-            SDL_Delay((Uint32) ((int)TIME_PER_FRAME - actualTimePerFrame));
+            SDL_Delay((Uint32) ((int) TIME_PER_FRAME - actualTimePerFrame));
         }
         currentTime = SDL_GetTicks();
 
-        SDL_RenderClear(renderer);
         //update logic position
         for (int i = 0; i < numObjects; ++i) updateXY(objects[i], currentTime);
-//        updateXY(ball->object, currentTime);
-        //check collision and correct their positions
-        int checkedObjIndeces[numObjects];
+
+        // Check collision and correct their positions
+        int checkedObjIndexes[numObjects];
         int numCheckedObj = 0;
         for (int i = 0; i < numObjects; ++i) {
             Object *currentObj = objects[i];
-            for (int j = 0; j < numObjects; j++){
-                if (i == j || isElemInArray(checkedObjIndeces, j+1, numCheckedObj)){
+            for (int j = 0; j < numObjects; j++) {
+                if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj)) {
                     continue;
                 }
                 checkCollision(objects[i], objects[j]);
             }
-//            printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
-            //update SDL position
-            SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
-            SDL_RenderCopyEx(renderer, currentObj->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
-            checkedObjIndeces[numCheckedObj++] = i + 1;
         }
-//        checkCollision(ball->object, players);
-//        SDL_Rect position = {(int) ceil(ball->object->X), (int) ceil(ball->object->Y), ball->object->W, ball->object->H};
-//        SDL_RenderCopyEx(renderer, ball->object->image, &fillRect, &position, 0, 0, SDL_FLIP_NONE);
+        //printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
 
+        //update SDL position
+        SDL_RenderClear(renderer);
+        for (int k = 0; k < numObjects; ++k) {
+            Object *currentObj = objects[k];
+            SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
+            SDL_RenderCopyEx(renderer, currentObj->image, &background, &position, 0, 0, SDL_FLIP_NONE);
+            checkedObjIndexes[numCheckedObj++] = k + 1;
+        }
         SDL_RenderPresent(renderer);
         lastTime = currentTime;
     }

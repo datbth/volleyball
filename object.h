@@ -23,25 +23,30 @@ enum ShapeType {
 typedef struct Object Object;
 
 struct Object {
-    int id, speed, accelY, W, H;
+    int id, accelY, W, H;
     float veloX, veloY, X, Y, lastMoveTime;
     void * wrapper;
     SDL_Texture *image;
     enum ObjectType type;
     enum ShapeType shapeType;
-    void (*applyCollision)(Object *A, Object *B);
+    void (*applyCollision)(Object *A, Object *B, float *collisionX, float *collisionY);
 };
 
 typedef struct {
     Object *object;
     SDL_Keycode up, left, right;
     float oldX, oldY;
+    int speedX, jumpHeight;
     bool onGround, isCollided;
 } Player;
 
 typedef struct {
     Object * object;
 } Ball;
+
+typedef struct {
+    Object * object;
+} Wall;
 
 /**
  * create Object
@@ -55,28 +60,27 @@ typedef struct {
  */
 Object *createObject(int id, float X, float Y,int W, int H, char* imagePath);
 
+
+
 /**
- * create Player
+ * create a struct Player
  * @param object : pointer to Object
- * @param speed : integer of speed
+ * @param speedX : integer of speed
+ * @param jumpHeight: height player can jump
  * @param up : key input for moving UP
  * @param left : key input for moving LEFT
  * @param right : key input for moving RIGHT
  * @return player
  */
-Player *createPlayer(Object* object, int speed, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
-
+Player *createPlayer(Object* object, int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
 /**
  * create ball
  * @param object : pointer to Object
  * @return ball
  */
 Ball *createBall(Object * object);
+Wall *createWall(Object * object);
 
-/**
- * free object
- * @param object
- */
 void freeObject(Object * object);
 
 /**
@@ -90,6 +94,7 @@ void freePlayer(Player * player);
  * @param ball
  */
 void freeBall(Ball * ball);
+void freeWall(Wall * wall);
 
 /**
  * set velocity X for player
@@ -130,19 +135,14 @@ bool setPlayerOnGround(Player *player);
 
 /**
  * check if the two object is collided
- * @param A : pointer to Object A
- * @param B : pointer to Object B
- * @return bool
- */
-bool isCircleCollided(Object *A, Object *B);
-
-/**
- *
- * @param X : pointer float X
- * @param Y : pointer float Y
  * @param A : pointer to object A
  * @param B : pointer to object B
+ * @param X : pointer to collision pointX
+ * @param Y : pointer to collision pointY
  */
+bool isCircleCollided(Object *A, Object *B, float *collisionX, float *collisionY);
+
+bool isWallCollided(Object *A, Object *B, float *collisionX, float *collisionY);
 void getCollideXY(float *X, float *Y, Object* A, Object *B);
 
 /**
@@ -171,13 +171,6 @@ bool isMovingCloser(Object * source, Object * target);
 void applyBallCollision(Object *source, Object *target);
 
 /**
- * check if players colliding and apply collision
- * @param source : pointer to Object source
- * @param target : pointer to Object target
- */
-void applyPlayerCollision(Object *source, Object *target);
-
-/**
  * what the fuck?
  * @param vectorX : pointer to float vector X
  * @param vectorY : pointer to float vector Y
@@ -194,5 +187,12 @@ int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, floa
  * @return float hypotenuse^2
  */
 float distSquare(Object * source, Object * target);
+
+void applyWallCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+void applyPlayerCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+
+void pushOut(Object *playerObj, float collisionX, float collisionY, float targetDistance);
+int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
+//float centerDistSquared(Object *source, Object *target);
 
 #endif //GAME_PLAYER_H
