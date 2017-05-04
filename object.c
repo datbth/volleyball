@@ -171,6 +171,7 @@ void updateXY(Object *object, float newFrameTime) {
     if (object->type == OBJECT_PLAYER){
         ((Player*)(object->wrapper))->isCollided = false;
     }
+                printf("|%i| X%f Y%f velX%f velY%f \n  ", object->id, object->X, object->Y, object->veloX, object->veloY);
 }
 
 void move(Player *player, int left, int up, int right) {
@@ -204,16 +205,18 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
         reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY), normalX, normalY);
 
         pushOut(playerObj, *collisionX, *collisionY, playerObj->W/2);
-        playerObj->veloX /= 2; playerObj->veloY /= 2;
+        playerObj->veloX = 0; playerObj->veloY = 0;md
+//        playerObj->veloX /= 2; playerObj->veloY /= 2;
     }
 
     if (target->type == OBJECT_PLAYER){
         reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY),
                                  target->X - playerObj->X, target->Y - playerObj->Y);
         pushOut(playerObj, target->X + target->W/2, target->Y + target->H/2, playerObj->W);
-//        playerObj->veloX = 0; playerObj->veloY = 0;
+        playerObj->veloX = 0; playerObj->veloY = 0;
 //                if(source->veloY != 0)printf("reflected velo X%f, Y%f. \n\n", source->veloX, source->veloY);
     }
+    ((Player*)(playerObj->wrapper))->isCollided = false;
     if (isMovingCloser(playerObj, target)) {
 //                if(source->veloY>=0) {
 //                    printf(" p%i veloX%f \n",source->id, source->veloX);
@@ -247,7 +250,7 @@ void pushOut(Object *pushedObj, float stableX, float stableY, float targetDistan
     float currentToStableX = stableX - (pushedObj->X + pushedObj->W/2);
     float currentToStableY = stableY - (pushedObj->Y + pushedObj->H/2);
     float dotProduct = currentToStableX*(pushedObj->veloX) + currentToStableY*(pushedObj->veloY);
-    float currentToStableDistSqr = currentToStableX*currentToStableX + currentToStableY+currentToStableY;
+    float currentToStableDistSqr = currentToStableX*currentToStableX + currentToStableY*currentToStableY;
     float veloMagnitude = sqrtf(pushedObj->veloY*pushedObj->veloY + pushedObj->veloX*pushedObj->veloX);
 //     pushedDistance^2 - 2 *(dotProduct/veloMagnitude)* pushedDistance
 //          - targetDistance^2 + currentToStableDist^2 = 0;
@@ -262,7 +265,7 @@ void pushOut(Object *pushedObj, float stableX, float stableY, float targetDistan
         else if (x2 >= 0){
             pushedDistance = x2;
         }
-        pushedDistance += 5;
+        pushedDistance += 1;
         pushedObj->X += pushedObj->veloX * pushedDistance / veloMagnitude;
         pushedObj->Y += pushedObj->veloY * pushedDistance / veloMagnitude;
         printf("distance: %f", pushedDistance);

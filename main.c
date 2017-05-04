@@ -119,9 +119,9 @@ int main(int argc, char *args[]) {
     Object* object_p2 = createObject(2, SCREEN_WIDTH/2, 0, 100, 100, "../pics/ball2.png");
 //    Object* object_p3 = createObject(3, SCREEN_WIDTH/2, 600, 100, 100, "../pics/ball3.png");
 //    Object* object_p4 = createObject(4, SCREEN_WIDTH/2, 0, 100, 100, "../pics/ball4.png");
-    players[0] = createPlayer(object_p1, 500, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D);
+    players[0] = createPlayer(object_p1, 250, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D);
     objects[numObjects++] = players[0]->object;
-    players[1] = createPlayer(object_p2, 500, SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M);
+    players[1] = createPlayer(object_p2, 250, SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M);
     objects[numObjects++] = players[1]->object;
 //    players[2] = createPlayer(object_p3, 500, SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9);
 //    players[3] = createPlayer(object_p4, 500, SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT);
@@ -184,23 +184,23 @@ int main(int argc, char *args[]) {
          */
         int checkedObjIndexes[numObjects];
         int numCheckedObj = 0;
-        for (int i = 0; i < numObjects; ++i)
-        {
+        for (int i = 0; i < numObjects; ++i) {
             Object *currentObj = objects[i];
-            for (
-                int j = 0; j < numObjects; j++)
-            {
-                if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj))
-                {
+            for (int j = 0; j < numObjects; j++) {
+                if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj)) {
                     continue;
                 }
                 checkCollision(objects[i], objects[j]);
             }
+        }
 //            printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
+        for (int k = 0; k < numObjects; ++k) {
+            Object *currentObj = objects[k];
             //update SDL position
             SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
             SDL_RenderCopyEx(renderer, currentObj->image, &background, &position, 0, 0, SDL_FLIP_NONE);
-            checkedObjIndexes[numCheckedObj++] = i + 1;
+            checkedObjIndexes[numCheckedObj++] = k + 1;
+        }
 //        checkCollision(ball->object, players);
 //        SDL_Rect position = {(int) ceil(ball->object->X), (int) ceil(ball->object->Y), ball->object->W, ball->object->H};
 //        SDL_RenderCopyEx(renderer, ball->object->image, &background, &position, 0, 0, SDL_FLIP_NONE);
@@ -212,7 +212,6 @@ int main(int argc, char *args[]) {
 //                                     wall->object->H};
 //            SDL_RenderCopyEx(renderer, wall->object->image, &background, &wallPosition, 0, 0, SDL_FLIP_NONE);
 
-        }
 //            checkCollision();
 
             SDL_RenderPresent(renderer);
