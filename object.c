@@ -181,8 +181,10 @@ void move(Player *player, int left, int up, int right) {
     if (!player->onGround) veloX = player->object->veloX;
     else if (left == 0 && right == 0) veloX = 0;
 
-    if (left == 1 && right == 0) veloX = -player->object->speed;
-    else if (right == 1 && left == 0) veloX = player->object->speed;
+    if (player->onGround || player->object->veloX == 0){
+        if (left == 1 && right == 0) veloX = -player->object->speed;
+        else if (right == 1 && left == 0) veloX = player->object->speed;
+    }
 //    veloX = (right == 1) ? speed : 0;
 
     if (up == 1 && player->onGround) {
@@ -205,18 +207,25 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
         reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY), normalX, normalY);
 
         pushOut(playerObj, *collisionX, *collisionY, playerObj->W/2);
-        playerObj->veloX = 0; playerObj->veloY = 0;md
-//        playerObj->veloX /= 2; playerObj->veloY /= 2;
+//        playerObj->veloX = 0; playerObj->veloY = 0;
+        playerObj->veloX /= 1000; playerObj->veloY /= 1000;
     }
 
     if (target->type == OBJECT_PLAYER){
         reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY),
                                  target->X - playerObj->X, target->Y - playerObj->Y);
         pushOut(playerObj, target->X + target->W/2, target->Y + target->H/2, playerObj->W);
-        playerObj->veloX = 0; playerObj->veloY = 0;
+//        playerObj->veloX = 0; playerObj->veloY = 0;
+        if (*collisionY > target->Y){
+            playerObj->veloY = 0;
+        }
+        else {
+            playerObj->veloY /= 1000;
+        }
+        playerObj->veloX /= 1000;
 //                if(source->veloY != 0)printf("reflected velo X%f, Y%f. \n\n", source->veloX, source->veloY);
     }
-    ((Player*)(playerObj->wrapper))->isCollided = false;
+//    ((Player*)(playerObj->wrapper))->isCollided = false;
     if (isMovingCloser(playerObj, target)) {
 //                if(source->veloY>=0) {
 //                    printf(" p%i veloX%f \n",source->id, source->veloX);
@@ -321,10 +330,10 @@ bool isCircleCollided(Object *A, Object *B, float *collisionX, float *collisionY
     float distX = BCenterX - ACenterX;
     float distY = BCenterY - ACenterY;
     float centerDistSquared = distX * distX + distY * distY;
-    float centerDist = sqrtf(centerDistSquared);
+//    float centerDist = sqrtf(centerDistSquared);
     if (centerDistSquared < (rA + rB)*(rA + rB)) {
-        *collisionX = ACenterX + distX / centerDist * rA;
-        *collisionY = ACenterY + distY / centerDist * rA;
+//        *collisionX = ACenterX + distX / centerDist * rA;
+//        *collisionY = ACenterY + distY / centerDist * rA;
         return true;
     }
     else return false;
@@ -347,25 +356,8 @@ bool isWallCollided(Object *A, Object *B, float *collisionX, float *collisionY)
     float center_A_X = A->X + radiusA;
     float center_A_Y = A->Y + radiusA;
 
-    if (center_A_X < B->X) closestBoxX = B->X;
-
-        // A is to B's right
-    else if (center_A_X > B->X + B->W) closestBoxX = B->X + B->W;
-
-        // A is within B's range
-    else closestBoxX = center_A_X;
-
-    /*
-     * Find the closest point's Y from A's center to B
-     * If A is above B then the closest point is always on the top edge of B
-     */
-    if (center_A_Y < B->Y) closestBoxY = B->Y;
-
-        // A is below B
-    else if (center_A_Y > B->Y + B->H) closestBoxY = B->Y + B->H;
-
-        // A is within B
-    else closestBoxY = center_A_Y;
+    closestBoxX = fmaxf(B->X, fminf(center_A_X, B->X + B->W));
+    closestBoxY = fmaxf(B->Y, fminf(center_A_Y, B->Y + B->H));
 
     if (distSquared(center_A_X, closestBoxX, center_A_Y, closestBoxY) < radiusA * radiusA)
     {
