@@ -256,7 +256,6 @@ void checkCollision(Object * source, Object *target){
 }
 
 bool isMovingCloser(Object * source, Object * target){
-    //check if the source object is moving toward the target or not
     /**
      * https://math.stackexchange.com/questions/1438002/determine-if-objects-are-moving-towards-each-other
      * The velocity of object 2 relative to object 1 is given by v = v2−v1.

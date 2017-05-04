@@ -17,8 +17,8 @@ and may not be redistributed without written permission.*/
 
 //Screen dimension constants
 SDL_Renderer *renderer;
-const int SCREEN_WIDTH = 1366;
-const int SCREEN_HEIGHT = 768;
+const int SCREEN_WIDTH = 1280;
+const int SCREEN_HEIGHT = 720;
 const int gravity = 1500;
 const float TIME_PER_FRAME = 1000 / SCREEN_FPS;
 int numObjects = 0;
@@ -59,7 +59,7 @@ SDL_Texture *loadTexture(char *path, SDL_Renderer *renderer) {
     }
 }
 
-SDL_Window *init() {   //create window
+SDL_Window *init() {
     SDL_Window *window;
     //Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
