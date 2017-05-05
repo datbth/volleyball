@@ -58,9 +58,7 @@ typedef struct {
  * @param imagePath : pointer to string of char
  * @return object
  */
-Object *createObject(int id, float X, float Y,int W, int H, char* imagePath);
-
-
+Object *createObject(int id,int W, int H, char* imagePath);
 
 /**
  * create a struct Player
@@ -146,7 +144,7 @@ bool isWallCollided(Object *A, Object *B, float *collisionX, float *collisionY);
 void getCollideXY(float *X, float *Y, Object* A, Object *B);
 
 /**
- * check for collision between source and target
+ * check for collision between 2 objects and apply effect
  * @param source : pointer to object Source
  * @param target : pointer to object Target
  */
@@ -154,24 +152,14 @@ void checkCollision(Object * source, Object * target);
 
 /**
  * check if the source object is moving toward the target or not
- * If the result is positive, then the objects are moving away from each other.
- * If the result is negative, then the objects are moving towards each other.
- * If the result is 00, then the distance is (at that instance) not changing.
- * @param source : pointer to object Source
- * @param target : pointer to object Target
- * @return dotProduct <= 0
+ * @param source : pointer to source object
+ * @param target : pointer to target object
+ * @return true if 2 objects move closer
  */
 bool isMovingCloser(Object * source, Object * target);
 
 /**
  *
- * @param source : pointer to Object source
- * @param target : pointer to Object target
- */
-void applyBallCollision(Object *source, Object *target);
-
-/**
- * what the fuck?
  * @param vectorX : pointer to float vector X
  * @param vectorY : pointer to float vector Y
  * @param normalX : float normal X
@@ -190,6 +178,15 @@ float distSquare(Object * source, Object * target);
 
 void applyWallCollision(Object *source, Object *target, float *collisionX, float *collisionY);
 void applyPlayerCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+
+/**
+ * Apply reaction when the ball collide with other objects
+ * @param ballObj the ball Object
+ * @param target  the object that collides with the ball
+ * @param collisionX
+ * @param collisionY
+ */
+void applyBallCollision(Object *ballObj, Object * target, float *collisionX, float *collisionY);
 
 void pushOut(Object *playerObj, float collisionX, float collisionY, float targetDistance);
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);

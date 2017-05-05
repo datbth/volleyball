@@ -98,11 +98,21 @@ bool isElemInArray(int* arr, int elem, int length){
     return false;
 }
 
-void resetPosition(){
-    for (int i = 0; i < numPlayer; ++i) {
-        Player *currentPlayer = players[i];
-        currentPlayer->object->X = currentPlayer->object->W*2*i;
-        currentPlayer->object->Y = 0;
+void resetPositions(){
+    for (int i = 0; i < numObjects; ++i) {
+        Object * currentObj = objects[i];
+        currentObj->Y = 0;
+        currentObj->veloY = 0;
+        currentObj->veloX = 0;
+        if (currentObj->type == OBJECT_PLAYER) {
+            currentObj->X = currentObj->W*i*4;
+        } else if(currentObj->type == OBJECT_BALL){
+            currentObj->X = players[0]->object->X + currentObj->W/2;
+            currentObj->Y = -200;
+            currentObj->veloY = -100;
+        } else if(currentObj->type == OBJECT_WALL){
+            currentObj->X = SCREEN_WIDTH / 2 - currentObj->W;
+        }
     }
 }
 
@@ -126,32 +136,29 @@ int main(int argc, char *args[]) {
                              SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9,
                              SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT};
     char imagePath[] = "../pics/ball0.png";
-    for (int l = 0; l < 2; l++) {
+    for (int l = 0; l < 4; l++) {
         imagePath[12] += 1;
-        Object* object = createObject(1, SCREEN_WIDTH/2, 0, 100, 100, imagePath);
+        Object* object = createObject(l+1, 100, 100, imagePath);
         players[numPlayer] = createPlayer(object, 250, 675, keycode[l*3+0], keycode[l*3+1], keycode[l*3+2]);
         objects[numObjects++] = players[numPlayer++]->object;
     }
 
+    //create ball
+    Object * object_b1 = createObject(6, 50, 50, "../pics/ball4.png");
+    Ball * ball = createBall(object_b1);
+    objects[numObjects++] = object_b1;
+
     // create wall
-  	Object *object_w1 = createObject(3, SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2, 50, objects[0]->H * 2, "../pics/wall.png");
-  	Wall *wall = createWall(object_w1);
+    Object *object_w1 = createObject(5, 50, objects[0]->H * 3, "../pics/wall.png");
+    Wall *wall = createWall(object_w1);
     objects[numObjects++] = wall->object;
 
-
-    // validate players and set their position
+    // validate players and set their positions
     int quit = 0;
     for (int j = 0; j < numPlayer; ++j){
-        if (players[j] == NULL || players[j]->object == NULL) {
-            quit = 1;
-        } else {
-            if (j == 3) {
-                players[j]->object->X = (j-1)*players[j]->object->W*2;
-                continue;
-            }
-            players[j]->object->X = j*players[j]->object->W*2;
-        }
+        if (players[j] == NULL || players[j]->object == NULL) quit = 1;
     }
+    resetPositions();
 
     // get current time
     // if curtime - lasttime > interval (frametime)
@@ -164,7 +171,7 @@ int main(int argc, char *args[]) {
         do {
             int signal = handleKeys();
             if (signal == 1) quit = 1;
-            else if(signal == 2) resetPosition();
+            else if(signal == 2) resetPositions();
         }
         while (SDL_PollEvent(&event) != 0);
 
@@ -187,7 +194,7 @@ int main(int argc, char *args[]) {
                 if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj)) {
                     continue;
                 }
-                printf("Checking %i and %i\n", i,j);
+//                printf("Checking %i and %i\n", i,j);
                 checkCollision(objects[i], objects[j]);
                 checkedObjIndexes[numCheckedObj++] = i + 1;
             }
@@ -215,10 +222,8 @@ int main(int argc, char *args[]) {
     }
     printf("\n");
 
-    SDL_DestroyRenderer(renderer);
-    renderer = NULL;
-    SDL_DestroyWindow(window);
-    window = NULL;
+    SDL_DestroyRenderer(renderer); renderer = NULL;
+    SDL_DestroyWindow(window); window = NULL;
 
     //Quit SDL subsystems
     IMG_Quit();
