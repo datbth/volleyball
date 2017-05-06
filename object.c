@@ -136,19 +136,15 @@ void updateXY(Object *object, float newFrameTime) {
 
     // touched the ground border
     if (object->Y >= SCREEN_HEIGHT - object->H) {
+        object->Y = SCREEN_HEIGHT - object->H;
         if(object->type == OBJECT_PLAYER) {
             ((Player*) object->wrapper)->onGround = true ;
             object->veloY = 0;
-        }
-        else if(object->type == OBJECT_BALL) {
-//            object->veloY = 0;
+        } else if(object->type == OBJECT_BALL) {
             reflectVectorAboutVector(&(object->veloX), &(object->veloY), 0, -object->H);
-//        printf("-------------------\n");
         }
-        object->Y = SCREEN_HEIGHT - object->H;
 
-    }
-    else {
+    } else {
         if(object->type == OBJECT_PLAYER) {
             ((Player*) object->wrapper)->onGround = false ;
         }
@@ -236,26 +232,29 @@ void pushOut(Object *pushedObj, float stableX, float stableY, float targetDistan
 
 void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, float *collisionY){
     ((Player*)playerObj->wrapper)->isCollided = true;
-
     if (target->type == OBJECT_WALL){
-//        printf("ColX %f colY %f\n", *collisionX, *collisionY);
+        printf("ColX %f colY %f\n", *collisionX, *collisionY);
         float normalX = playerObj->X + playerObj->W/2 - *collisionX,
                 normalY = playerObj->Y + playerObj->H/2 - *collisionY;
         reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY), -normalX, -normalY);
+
         pushOut(playerObj, *collisionX, *collisionY, playerObj->W/2);
-
+//        playerObj->veloX = 0; playerObj->veloY = 0;
         if (*collisionY > target->Y) playerObj->veloY = 0;
-        else playerObj->veloX = 0;
+        else {
+            playerObj->veloX = 0;
+//            playerObj->veloY /= 10;
+        }
         playerObj->veloX /= 10;
-
     } else if (target->type == OBJECT_PLAYER){
         if (isMovingCloser(playerObj, target)) {
             reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY),target->X - playerObj->X, target->Y - playerObj->Y);
             pushOut(playerObj, target->X + target->W/2, target->Y + target->H/2, playerObj->W);
+//        playerObj->veloX = 0; playerObj->veloY = 0;
             playerObj->veloX /= 10; playerObj->veloY /= 10;
 
-            float centerToCollisionY = *collisionY - (target->Y + target->H/2);
-            if (centerToCollisionY < 0){
+            float targetCenterToCollisionY = *collisionY - (target->Y + target->H/2);
+            if (targetCenterToCollisionY < 0){
                 ((Player*)(playerObj->wrapper))->onGround = true;
                 ((Player*)(playerObj->wrapper))->isCollided = false;
             }
@@ -264,18 +263,7 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
 }
 
 void applyWallCollision(Object *wallObject, Object *target, float *collisionX, float *collisionY) {
-//    ((Wall*)wallObject->wrapper)->isCollided = true;
 
-    if (isMovingCloser(target, wallObject))
-    {
-//        float normalX = target->X + target->W/2 - *collisionX,
-//            normalY = target->Y + target->H/2 - *collisionY;
-//        reflectVectorAboutVector(&(target->veloX), &(target->veloY), normalX, normalY);
-//
-//        pushOut(target, *collisionX, *collisionY, target->W/2);
-    }
-
-//    printf("wall collided \n");
 }
 
 void applyBallCollision(Object *ballObj, Object * target, float *collisionX, float *collisionY){
@@ -290,7 +278,6 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
 
 //        if (*collisionY > target->Y) ballObj->veloY = 0;
 //        else ballObj->veloX = 0;
-//        ballObj->veloX /= 10;
 
     } else if (target->type == OBJECT_PLAYER){
         if (isMovingCloser(ballObj, target)) {
@@ -356,7 +343,6 @@ bool isWallCollided(Object *A, Object *B, float *collisionX, float *collisionY){
         return true;
 //        printf("collided \n");
     }
-
     return false;
 }
 
@@ -406,6 +392,6 @@ bool isMovingCloser(Object * source, Object * target){
     float dX = target->X - source->X;
     float dY = target->Y - source->Y;
     float dotProduct = vX*dX + vY*dY;
-    return dotProduct <= 0;
+    return dotProduct < 0;
 }
 

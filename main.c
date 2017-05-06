@@ -5,20 +5,21 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <time.h>
 #include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 #include "object.h"
 #include "main.h"
-#include <unistd.h>
 
 
 //Screen dimension constants
 SDL_Renderer *renderer;
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 720;
+TTF_Font *font;
+char * fontPath = "../DejaVuSans-Bold.ttf";
 const int gravity = 1500;
 const float TIME_PER_FRAME = 1000 / SCREEN_FPS;
 int numObjects = 0;
@@ -26,6 +27,7 @@ int numPlayer = 0;
 Player *players[4];
 Object *objects[100];
 const Uint8 *currentKeyStates;
+
 int tickIndex = 0;
 int tickSum = 0;
 int tickList[MAXSAMPLE];
@@ -41,6 +43,30 @@ double calculateAverageTick(int newTick) {
     return (double) tickSum / MAXSAMPLE;
 }
 
+void getScoreString(char *string, int teamPoint1st, int teamPoint2nd){
+    int strMaxLen = 6;
+    char scoreString1[strMaxLen], scoreString2[strMaxLen];
+    snprintf(scoreString1, strMaxLen, "%d", teamPoint1st);
+    snprintf(scoreString2, strMaxLen, "%d", teamPoint2nd);
+    strcat(scoreString1, "-");
+    strcat(scoreString1, scoreString2);
+    for (int i = 0; i < 6; ++i) {
+        string[i] = scoreString1[i];
+    }
+}
+
+SDL_Texture * updateScoreTexture(char * text, SDL_Color color){
+    SDL_Texture * scoreTexture;
+    SDL_Surface * textSurface = TTF_RenderText_Solid(font, text, color);
+    if (textSurface == NULL) return NULL;
+    else{
+        scoreTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        if(scoreTexture == NULL) return NULL;
+    }
+    SDL_FreeSurface(textSurface);
+    return scoreTexture ;
+}
+
 SDL_Texture *loadTexture(char *path, SDL_Renderer *renderer) {
     SDL_Surface *loadedSurface = IMG_Load(path);    //  load PNG image
     SDL_Texture *texture = NULL;
@@ -52,11 +78,9 @@ SDL_Texture *loadTexture(char *path, SDL_Renderer *renderer) {
         texture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
         if (texture == NULL) {
             printf("can't create Texture %s %s\n", path, SDL_GetError());
-            return NULL;
-        } else {
-            SDL_FreeSurface(loadedSurface);
-            return texture;
         }
+        SDL_FreeSurface(loadedSurface);
+        return texture;
     }
 }
 
@@ -65,7 +89,7 @@ SDL_Window *init() {
     //Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         printf("can't initialize SDL%s\n", SDL_GetError());
-        return false;
+        return NULL;
     } else {
         //Create window
         window = SDL_CreateWindow("Volleyball", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -117,24 +141,39 @@ void resetPositions(){
 }
 
 int main(int argc, char *args[]) {
-    //Start up SDL and create window
+
+    //START UP SDL AND CREATE WINDOW
     SDL_Window *window = init();
     if (window == NULL) return 1;
 
     SDL_Event event;
 
-    // setup controller
+    // SETUP CONTROLLER
     currentKeyStates = SDL_GetKeyboardState(NULL);
 
+    // SETUP IMAGE RENDERER
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == NULL) return 2;
-    SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+
+    // SETUP FONT RENDERER
+    if (TTF_Init() == -1) return 3;
+    font = TTF_OpenFont(fontPath, 20);
+    if (font == NULL) {
+        printf("can't load font %s\n", SDL_GetError());
+        return 3;
+    }
+
+    // SETUP SCORE INDICATOR
+    int teamPoint1st = 0, teamPoint2nd = 0;
+    char scoreString[10];
+    SDL_Texture * scoreTexture = NULL;
+    SDL_Color scoreColor = { 0, 255, 0, 255 };
 
     // create player
     SDL_Keycode keycode[] = {SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
                              SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M,
-                             SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9,
-                             SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT};
+                             SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
+                             SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9};
     char imagePath[] = "../pics/ball0.png";
     for (int l = 0; l < 4; l++) {
         imagePath[12] += 1;
@@ -160,11 +199,8 @@ int main(int argc, char *args[]) {
     }
     resetPositions();
 
-    // get current time
-    // if curtime - lasttime > interval (frametime)
-    // -> run loop
-
     float lastTime = 0, currentTime;
+    SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
     // game loop
     while (quit == 0){
         // get key input
@@ -174,6 +210,7 @@ int main(int argc, char *args[]) {
             else if(signal == 2) resetPositions();
         }
         while (SDL_PollEvent(&event) != 0);
+        if (event.type == SDL_QUIT) quit = 1;   // close on top right 'x'
 
         // lock FPS
         currentTime = SDL_GetTicks();
@@ -201,14 +238,32 @@ int main(int argc, char *args[]) {
         }
         //printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
 
-        //update SDL position
+
+        //update UI
         SDL_RenderClear(renderer);
         for (int k = 0; k < numObjects; ++k) {
             Object *currentObj = objects[k];
             SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
             SDL_RenderCopyEx(renderer, currentObj->image, &background, &position, 0, 0, SDL_FLIP_NONE);
         }
-        SDL_RenderPresent(renderer);
+        // update score
+        if(ball->object->Y >= SCREEN_HEIGHT-ball->object->H){
+            printf("touch ground\n");
+            if(ball->object->X <SCREEN_WIDTH/2) teamPoint2nd++;
+            else teamPoint1st++;
+        }
+        getScoreString(scoreString, teamPoint1st, teamPoint2nd);
+        scoreTexture = updateScoreTexture(scoreString, scoreColor);
+        SDL_Rect position = {SCREEN_WIDTH /2 - 100, 0, 200, 50};
+        SDL_RenderCopyEx(renderer, scoreTexture, &background, &position, 0, 0, SDL_FLIP_NONE);
+        if (teamPoint1st == 12 || teamPoint2nd == 12) {
+            teamPoint1st = 0;
+            teamPoint2nd = 0;
+            resetPositions();
+        }
+
+        SDL_RenderPresent(renderer); //// render
+
         lastTime = currentTime;
     }
 
@@ -221,11 +276,12 @@ int main(int argc, char *args[]) {
         freePlayer(players[i]);
     }
     printf("\n");
-
     SDL_DestroyRenderer(renderer); renderer = NULL;
     SDL_DestroyWindow(window); window = NULL;
+    TTF_CloseFont(font); font = NULL;
 
     //Quit SDL subsystems
+    TTF_Quit();
     IMG_Quit();
     SDL_Quit();
 
