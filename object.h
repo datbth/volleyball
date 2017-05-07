@@ -25,6 +25,7 @@ typedef struct Object Object;
 struct Object {
     int id, accelY, W, H;
     float veloX, veloY, X, Y, lastMoveTime;
+    float oldX, oldY;
     void * wrapper;
     SDL_Texture *image;
     enum ObjectType type;
@@ -35,7 +36,6 @@ struct Object {
 typedef struct {
     Object *object;
     SDL_Keycode up, left, right;
-    float oldX, oldY;
     int speedX, jumpHeight;
     bool onGround, isCollided;
 } Player;
@@ -140,7 +140,7 @@ bool setPlayerOnGround(Player *player);
  */
 bool isCircleCollided(Object *A, Object *B, float *collisionX, float *collisionY);
 
-bool isWallCollided(Object *A, Object *B, float *collisionX, float *collisionY);
+bool isWallCollided(Object *circle, Object *rectangle, float *collisionX, float *collisionY);
 void getCollideXY(float *X, float *Y, Object* A, Object *B);
 
 /**
