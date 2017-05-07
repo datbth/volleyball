@@ -12,6 +12,7 @@ and may not be redistributed without written permission.*/
 #include <SDL2/SDL_ttf.h>
 #include <zconf.h>
 #include <time.h>
+#include <SDL_ttf.h>
 #include "object.h"
 #include "main.h"
 
