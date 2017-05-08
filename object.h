@@ -24,7 +24,7 @@ typedef struct Object Object;
 
 struct Object {
     int id, accelY, W, H;
-    float veloX, veloY, X, Y, lastMoveTime;
+    float veloX, veloY, X, Y;
     float oldX, oldY;
     void * wrapper;
     SDL_Texture *image;

@@ -38,8 +38,6 @@ Object *createObject(int id, int W, int H, char* imagePath){
     object->veloX = 0;
     object->veloY = 0;
     object->accelY = 0;
-    object->lastMoveTime = 0;
-
     return object;
 
 }
@@ -123,16 +121,26 @@ void setVeloX(Object *player, float veloX) {
     player->veloX = veloX;
 }
 
-void updateXY(Object *object, float newFrameTime) {
-    // first frame of the game
-    if (object->lastMoveTime == 0) object->lastMoveTime = newFrameTime;
+void updateXY(Object *object, float moveTime) {
+    if(moveTime <= 0) return;
+    moveTime /= 1000;
 
-    float moveTime = (newFrameTime - object->lastMoveTime) / 1000;
+    // save old position
+    if (!((Player *)object->wrapper)->isCollided) {
+        object->oldX = object->X;
+        object->oldY = object->Y;
+    }
+
+    // first frame of the game
+//    if (object->lastMoveTime == 0) object->lastMoveTime = newFrameTime;
+
+//    float moveTime = (newFrameTime - object->lastMoveTime) / 1000;
+
     object->X += object->veloX * moveTime;  //update X
 
     float oldVeloY = object->veloY;         //update Y
     object->veloY += gravity * moveTime;
-    object->Y += (object->veloY+oldVeloY)/2 * moveTime;
+    object->Y += (object->veloY+oldVeloY)/2 * moveTime ;
 
     // touched the ground border
     if (object->Y >= SCREEN_HEIGHT - object->H) {
@@ -159,8 +167,6 @@ void updateXY(Object *object, float newFrameTime) {
         object->X = SCREEN_WIDTH - object->W;
         object->veloX = -object->veloX;
     }
-
-    object->lastMoveTime = newFrameTime;
 
     if (object->type == OBJECT_PLAYER){
         ((Player*)(object->wrapper))->isCollided = false;
@@ -229,7 +235,7 @@ void pushOut(Object *pushedObj, float stableX, float stableY, float targetDistan
         printf("pushedDistance: %f", pushedDistance);
     }
 }
-void getBack(Object * object){
+void backToUncollidedPosition(Object *object){
     if (object->type != OBJECT_WALL) {
 //        if(object->type == OBJECT_PLAYER) printf("X %f Y %f, oldX %f, oldY %f\n", object->X, object->Y, object->oldX, object->oldY);
 //        float temp = object->X;
@@ -243,33 +249,43 @@ void getBack(Object * object){
 
 void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, float *collisionY){
     ((Player*)playerObj->wrapper)->isCollided = true;
-    if (target->type == OBJECT_WALL){
-        getBack(playerObj);
-//        printf("ColX %f colY %f\n", *collisionX, *collisionY);
-        float normalX = playerObj->X + playerObj->W/2 - *collisionX,
-                normalY = playerObj->Y + playerObj->H/2 - *collisionY;
-        reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY), -normalX, -normalY);
+    switch (target->type) {
+        case OBJECT_WALL:
+            backToUncollidedPosition(playerObj);
+            //        printf("ColX %f colY %f\n", *collisionX, *collisionY);
+            float normalX = playerObj->X + playerObj->W / 2 - *collisionX,
+                    normalY = playerObj->Y + playerObj->H / 2 - *collisionY;
+            reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY), -normalX, -normalY);
 
-        //when the ball is on top of the wall
-//        if (*collisionY > target->Y) playerObj->veloY = 0;
-//        else {
-//            playerObj->veloX = 0;
-////            playerObj->veloY /= 10;
-//        }
-//        playerObj->veloX = 0;
-    } else if (target->type == OBJECT_PLAYER){
-        getBack(playerObj);
-        if (isMovingCloser(playerObj, target)) {
-            reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY),target->X - playerObj->X, target->Y - playerObj->Y);
-//        playerObj->veloX = 0; playerObj->veloY = 0;
-            playerObj->veloX /= 10; playerObj->veloY /= 10;
+            //when the ball is on top of the wall
+            //        if (*collisionY > target->Y) playerObj->veloY = 0;
+            //        else {
+            playerObj->veloX /= 3;
+            ////            playerObj->veloY /= 10;
+            //        }
+            //        playerObj->veloX = 0;
+            break;
+        case OBJECT_PLAYER:
+            backToUncollidedPosition(playerObj);
+            if (isMovingCloser(playerObj, target)) {
+                reflectVectorAboutVector(&(playerObj->veloX), &(playerObj->veloY), target->X - playerObj->X,
+                                         target->Y - playerObj->Y);
+                //        playerObj->veloX = 0; playerObj->veloY = 0;
+                playerObj->veloX /= 10;
+                playerObj->veloY /= 10;
 
-            float targetCenterToCollisionY = *collisionY - (target->Y + target->H/2);
-            if (targetCenterToCollisionY < 0){
-                ((Player*)(playerObj->wrapper))->onGround = true;
-                ((Player*)(playerObj->wrapper))->isCollided = false;
+                float targetCenterToCollisionY = *collisionY - (target->Y + target->H / 2);
+                if (targetCenterToCollisionY < 0) {
+                    ((Player *) (playerObj->wrapper))->onGround = true;
+                    ((Player *) (playerObj->wrapper))->isCollided = false;
+                }
             }
-        }
+            break;
+        case OBJECT_BALL:
+            backToUncollidedPosition(playerObj);
+            break;
+        case OBJECT_ITEM:
+            break;
     }
 }
 
@@ -281,18 +297,29 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
 //    ((Ball*)ballObj->wrapper)->isCollided = true;
 
     if (target->type == OBJECT_WALL){
-        getBack(ballObj);
+        backToUncollidedPosition(ballObj);
 //        printf("ColX %f colY %f\n", *collisionX, *collisionY);
         float normalX = ballObj->X + ballObj->W/2 - *collisionX,
                 normalY = ballObj->Y + ballObj->H/2 - *collisionY;
         reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY), -normalX, -normalY);
 
     } else if (target->type == OBJECT_PLAYER){
-        getBack(ballObj);
+        backToUncollidedPosition(ballObj);
+        printf("velo ball: %f\n", ballObj->veloY);
         if (isMovingCloser(ballObj, target)) {
             reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY),
                                      ballObj->X + ballObj->W/2 - *collisionX ,
                                      ballObj->Y + ballObj->H/2 - *collisionY);
+
+
+            ballObj->veloX *= 0.7;
+            ballObj->veloY *= 0.7;
+
+        }
+        if(ballObj->veloY <= 200) {
+            ballObj->veloY += target->veloY;
+            ballObj->veloX += target->veloX;
+            printf("*velo ball: %f\n", ballObj->veloY);
         }
     }
 }

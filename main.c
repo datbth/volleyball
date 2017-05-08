@@ -27,6 +27,7 @@ const int gravity = 1500;
 const float TIME_PER_FRAME = 1000 / SCREEN_FPS;
 int numObjects = 0;
 int numPlayer = 0;
+float timeScale = 1.0;
 Player *players[4];
 Object *objects[50];
 const Uint8 *currentKeyStates;
@@ -36,6 +37,7 @@ void resetPositions(int teamHasBall){
      * reset all players to the initial positions and remove velocity
      * if teamHasBall == 0, ball will be put in randomly
      */
+
     if(teamHasBall == 0) teamHasBall = (rand() % 2)+1;
 //    printf("team has ball %i\n", teamHasBall);
     for (int i = 0; i < numObjects; ++i) {
@@ -47,6 +49,7 @@ void resetPositions(int teamHasBall){
         switch (currentObj->type) {
             case OBJECT_PLAYER:
                 currentObj->X = SCREEN_WIDTH/4 * i +SCREEN_WIDTH/8 - currentObj->W/2;
+                currentObj->Y = SCREEN_HEIGHT - currentObj->H;
                 break;
             case OBJECT_BALL:
                 if (teamHasBall == 1) {
@@ -59,6 +62,7 @@ void resetPositions(int teamHasBall){
                 break;
             case OBJECT_WALL:
                 currentObj->X = SCREEN_WIDTH / 2 - currentObj->W/2;
+                currentObj->Y = SCREEN_HEIGHT - currentObj->H;
                 break;
             case OBJECT_ITEM:break;
         }
@@ -77,7 +81,7 @@ void getScoreString(char *string, int teamPoint1st, int teamPoint2nd){
     }
 }
 
-void updateScore(Ball *ball, int *teamPoint1st, int *teamPoint2nd){
+int updateScore(Ball *ball, int *teamPoint1st, int *teamPoint2nd){
     if(ball->object->Y >= SCREEN_HEIGHT-ball->object->H){
 //            printf("touch ground\n");
         int teamHasBall = 0;
@@ -92,8 +96,9 @@ void updateScore(Ball *ball, int *teamPoint1st, int *teamPoint2nd){
             *teamPoint1st = 0;
             *teamPoint2nd = 0;
         }
-        resetPositions(teamHasBall);
+        return teamHasBall;
     }
+    return -1;
 }
 
 SDL_Texture * updateScoreTexture(char * text, SDL_Color color){
@@ -143,6 +148,10 @@ SDL_Window *init() {
     }
 }
 
+void togglePause(float * lastTime) {
+    timeScale = timeScale? 0:1;
+}
+
 int handleKeys() {
     for (int i = 0; i < numPlayer; ++i) {
         Player *player = players[i];
@@ -153,6 +162,7 @@ int handleKeys() {
     }
     if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_Q]) return 1;
     else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_R]) return 2;
+    else if (currentKeyStates[SDL_SCANCODE_P] && currentKeyStates[SDL_SCANCODE_LCTRL]) return 3;
     else return 0;
 }
 
@@ -191,6 +201,8 @@ int main(int argc, char *args[]) {
     char scoreString[10];
     SDL_Texture * scoreTexture = NULL;
     SDL_Color scoreColor = { 0, 255, 0, 255 };
+    getScoreString(scoreString, teamPoint1st, teamPoint2nd);
+    scoreTexture = updateScoreTexture(scoreString, scoreColor);
 
     //// CREATE PLAYER
     SDL_Keycode keycode[] = {SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
@@ -211,7 +223,7 @@ int main(int argc, char *args[]) {
     objects[numObjects++] = object_b1;
 
     //// CREATE WALL
-    Object *object_w1 = createObject(6, 50, objects[0]->H * 3, "../pics/wall.png");
+    Object *object_w1 = createObject(6, 25, objects[0]->H * 3, "../pics/wall.png");
     Wall *wall = createWall(object_w1);
     objects[numObjects++] = wall->object;
 
@@ -231,8 +243,18 @@ int main(int argc, char *args[]) {
         //// GET KEY INPUT
         do {
             int signal = handleKeys();
-            if (signal == 1) quit = 1;
-            else if(signal == 2) resetPositions(0);
+            switch (handleKeys()){
+                case 1:
+                    quit = 1;
+                    break;
+                case 2:
+                    resetPositions(0);
+                    break;
+                case 3:
+                    togglePause(&lastTime);
+                    break;
+                default:break;
+            }
         }
         while (SDL_PollEvent(&event) != 0);
         if (event.type == SDL_QUIT) quit = 1;   // close on top right 'x'
@@ -247,12 +269,7 @@ int main(int argc, char *args[]) {
 
         //// UPDATE LOGIC POSITION
         for (int i = 0; i < numObjects; ++i) {
-            Object * currentObj = objects[i];
-            if (!((Player *)currentObj->wrapper)->isCollided) {
-                currentObj->oldX = currentObj->X;
-                currentObj->oldY = currentObj->Y;
-            }
-            updateXY(currentObj, currentTime);
+            updateXY(objects[i], (currentTime - lastTime) * timeScale);
         }
 
         //// CHECK COLLISION AND CORRECT THEIR POSITIONS
@@ -282,9 +299,15 @@ int main(int argc, char *args[]) {
             }
         }
         //// UPDATE SCORE
-        updateScore(ball, &teamPoint1st, &teamPoint2nd);
-        getScoreString(scoreString, teamPoint1st, teamPoint2nd);
-        scoreTexture = updateScoreTexture(scoreString, scoreColor);
+        int teamHasBall = updateScore(ball, &teamPoint1st, &teamPoint2nd);
+        if (teamHasBall > 0){
+            resetPositions(teamHasBall);
+//            timeScale = 0;
+            SDL_Delay(1000);
+            getScoreString(scoreString, teamPoint1st, teamPoint2nd);
+            scoreTexture = updateScoreTexture(scoreString, scoreColor);
+        };
+
         SDL_Rect position = {SCREEN_WIDTH /2 - 100, 0, 200, 50};
         SDL_RenderCopyEx(renderer, scoreTexture, &background, &position, 0, 0, SDL_FLIP_NONE);
 
