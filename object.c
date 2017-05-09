@@ -277,7 +277,7 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
                 float targetCenterToCollisionY = *collisionY - (target->Y + target->H / 2);
                 if (targetCenterToCollisionY < 0) {
                     ((Player *) (playerObj->wrapper))->onGround = true;
-                    ((Player *) (playerObj->wrapper))->isCollided = false;
+//                    ((Player *) (playerObj->wrapper))->isCollided = false;
                 }
             }
             break;

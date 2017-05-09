@@ -1,7 +1,4 @@
-/*This source code copyrighted by Lazy Foo' Productions (2004-2015)
-and may not be redistributed without written permission.*/
-
-//Using SDL, SDL_image, standard IO, and strings
+//Using SDL, SDL_image, standard IO
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -10,7 +7,6 @@ and may not be redistributed without written permission.*/
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
-#include <zconf.h>
 #include <time.h>
 #include <SDL_ttf.h>
 #include "object.h"
