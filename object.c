@@ -285,7 +285,7 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
                 float targetCenterToCollisionY = *collisionY - (target->Y + target->H / 2);
                 if (targetCenterToCollisionY < 0) {
                     ((Player *) (playerObj->wrapper))->onGround = true;
-//                    ((Player *) (playerObj->wrapper))->isCollided = false;
+                    ((Player *) (playerObj->wrapper))->isCollided = false;
                 }
             }
             break;
@@ -303,7 +303,7 @@ void applyWallCollision(Object *wallObject, Object *target, float *collisionX, f
 
 void applyBallCollision(Object *ballObj, Object * target, float *collisionX, float *collisionY){
     // Play sound when ball collide
-    Mix_PlayChannel( -1, sounds[ rand()%3], 0 );
+    if(target->type != OBJECT_PLAYER) Mix_PlayChannel( -1, sounds[ rand()%3], 0 );
 
 //    ((Ball*)ballObj->wrapper)->isCollided = true;
     switch (target->type){
@@ -315,6 +315,8 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
             reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY), -normalX, -normalY);
             break;
         case OBJECT_PLAYER:
+            // Play sound when ball collide
+            if (ballObj->veloY >= 200) Mix_PlayChannel( -1, sounds[ rand()%3], 0 );
             backToUncollidedPosition(ballObj);
             printf("velo ball: %f\n", ballObj->veloY);
             if (isMovingCloser(ballObj, target)) {
@@ -332,6 +334,8 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
                 printf("*velo ball: %f\n", ballObj->veloY);
             }
             break;
+        case OBJECT_BALL:break;
+        case OBJECT_ITEM:break;
     }
 }
 
