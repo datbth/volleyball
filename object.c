@@ -3,11 +3,15 @@
 //
 
 #include <SDL2/SDL_system.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL.h>
 #include <time.h>
 #include "object.h"
 #include "stdbool.h"
 #include "math.h"
 #include "main.h"
+
+
 
 /**
  * player-player: block each other
@@ -186,6 +190,10 @@ void move(Player *player, int left, int up, int right) {
         player->object->accelY = -100;
         player->object->veloY = -player->jumpHeight;
         //player->onGround = false;
+
+        // Play sound when jump
+        Mix_PlayChannel( -1, sounds[ 3+ rand()%3], 0 );
+        // printf("%i\n", 3+ rand()%3);
     }
 
     setVeloX(player->object, veloX);
@@ -286,6 +294,9 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
         float normalX = ballObj->X + ballObj->W/2 - *collisionX,
                 normalY = ballObj->Y + ballObj->H/2 - *collisionY;
         reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY), -normalX, -normalY);
+        // Play sound when ball collide
+        Mix_PlayChannel( -1, sounds[ rand()%3], 0 );
+        // printf("%i\n", rand()%3);
 
     } else if (target->type == OBJECT_PLAYER){
         getBack(ballObj);
@@ -293,6 +304,9 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
             reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY),
                                      ballObj->X + ballObj->W/2 - *collisionX ,
                                      ballObj->Y + ballObj->H/2 - *collisionY);
+            // Play sound when ball collide
+            Mix_PlayChannel( -1, sounds[ rand()%3], 0 );
+            // printf("%i\n", rand()%3);
         }
     }
 }
@@ -394,4 +408,6 @@ bool isMovingCloser(Object * source, Object * target){
     float dotProduct = vX*dX + vY*dY;
     return dotProduct < 0;
 }
+
+
 
