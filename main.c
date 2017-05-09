@@ -32,6 +32,7 @@ Player *players[4];
 Object *objects[50];
 const Uint8 *currentKeyStates;
 Mix_Chunk *sounds[10];
+Mix_Music *music;
 
 void resetPositions(int teamHasBall){
     /**
@@ -192,6 +193,8 @@ int main(int argc, char *args[]) {
     sounds[numSound++] = Mix_LoadWAV("../sounds/jump3.wav");
     sounds[numSound++] = Mix_LoadWAV("../sounds/whistle.wav");
 
+    music = Mix_LoadMUS("../sounds/sandstorm.mp3");
+
 
     //// SETUP CONTROLLER
     currentKeyStates = SDL_GetKeyboardState(NULL);
@@ -250,7 +253,9 @@ int main(int argc, char *args[]) {
     SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
     // Play sound when start
-    Mix_PlayChannel( -1, sounds[6], 0 );
+    // Mix_PlayChannel( -1, sounds[6], 0 );
+    Mix_PlayMusic(music, -1);
+    
      // printf("%i\n", sounds[6]);
 
     // game loop
