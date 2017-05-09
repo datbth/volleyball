@@ -13,6 +13,7 @@
 #include "main.h"
 
 
+
 //Screen dimension constants
 SDL_Renderer *renderer;
 const int SCREEN_WIDTH = 1280;
@@ -27,6 +28,7 @@ float timeScale = 1.0;
 Player *players[4];
 Object *objects[50];
 const Uint8 *currentKeyStates;
+Mix_Chunk *sounds[10];
 
 void resetPositions(int teamHasBall){
     /**
@@ -34,6 +36,8 @@ void resetPositions(int teamHasBall){
      * if teamHasBall == 0, ball will be put in randomly
      */
 
+    // Play sound when start / startover
+    Mix_PlayChannel( -1, sounds[6], 0 );
     if(teamHasBall == 0) teamHasBall = (rand() % 2)+1;
 //    printf("team has ball %i\n", teamHasBall);
     for (int i = 0; i < numObjects; ++i) {
@@ -140,6 +144,12 @@ SDL_Window *init() {
             printf("can't initialize Window%s\n", SDL_GetError());
             return NULL;
         }
+
+        if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
+        {
+            printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+            return NULL;
+        }
         return window;
     }
 }
@@ -176,6 +186,17 @@ int main(int argc, char *args[]) {
     if (window == NULL) return 1;
 
     SDL_Event event;
+
+    // SETUP SOUNDS
+    int numSound = 0;
+    sounds[numSound++] = Mix_LoadWAV("../sounds/hit1.wav");
+    sounds[numSound++] = Mix_LoadWAV("../sounds/hit2.wav");
+    sounds[numSound++] = Mix_LoadWAV("../sounds/hit3.wav");
+    sounds[numSound++] = Mix_LoadWAV("../sounds/jump1.wav");
+    sounds[numSound++] = Mix_LoadWAV("../sounds/jump2.wav");
+    sounds[numSound++] = Mix_LoadWAV("../sounds/jump3.wav");
+    sounds[numSound++] = Mix_LoadWAV("../sounds/whistle.wav");
+
 
     //// SETUP CONTROLLER
     currentKeyStates = SDL_GetKeyboardState(NULL);
@@ -234,6 +255,11 @@ int main(int argc, char *args[]) {
     float lastTime = 0, currentTime;
     int rotation = 0;
     SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+
+    // Play sound when start
+    Mix_PlayChannel( -1, sounds[6], 0 );
+     // printf("%i\n", sounds[6]);
+
     // game loop
     while (quit == 0){
         //// GET KEY INPUT
@@ -330,7 +356,13 @@ int main(int argc, char *args[]) {
     SDL_DestroyWindow(window); window = NULL;
     TTF_CloseFont(font); font = NULL;
 
+    // free / quite sound
+    for (int i = 0; i < numSound; ++i)
+    {
+    Mix_FreeChunk(sounds[i]);sounds[i] = NULL;
+    }
     //Quit SDL subsystems
+    Mix_Quit();
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();

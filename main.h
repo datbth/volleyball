@@ -14,6 +14,7 @@ extern const int SCREEN_HEIGHT;
 extern const int gravity;
 extern SDL_Renderer *renderer;
 extern int numPlayer;
+extern Mix_Chunk *sounds[10];
 //extern Player * players[numPlayer];
 
 SDL_Texture *loadTexture(char *path, SDL_Renderer* renderer);

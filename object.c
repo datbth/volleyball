@@ -3,11 +3,15 @@
 //
 
 #include <SDL2/SDL_system.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL.h>
 #include <time.h>
 #include "object.h"
 #include "stdbool.h"
 #include "math.h"
 #include "main.h"
+
+
 
 /**
  * player-player: block each other
@@ -192,6 +196,10 @@ void move(Player *player, int left, int up, int right) {
         player->object->accelY = -100;
         player->object->veloY = -player->jumpHeight;
         //player->onGround = false;
+
+        // Play sound when jump
+        Mix_PlayChannel( -1, sounds[ 3+ rand()%3], 0 );
+        // printf("%i\n", 3+ rand()%3);
     }
 
     setVeloX(player->object, veloX);
@@ -294,33 +302,36 @@ void applyWallCollision(Object *wallObject, Object *target, float *collisionX, f
 }
 
 void applyBallCollision(Object *ballObj, Object * target, float *collisionX, float *collisionY){
+    // Play sound when ball collide
+    Mix_PlayChannel( -1, sounds[ rand()%3], 0 );
+
 //    ((Ball*)ballObj->wrapper)->isCollided = true;
+    switch (target->type){
+        case OBJECT_WALL:
+            backToUncollidedPosition(ballObj);
+    //        printf("ColX %f colY %f\n", *collisionX, *collisionY);
+            float normalX = ballObj->X + ballObj->W/2 - *collisionX,
+                    normalY = ballObj->Y + ballObj->H/2 - *collisionY;
+            reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY), -normalX, -normalY);
+            break;
+        case OBJECT_PLAYER:
+            backToUncollidedPosition(ballObj);
+            printf("velo ball: %f\n", ballObj->veloY);
+            if (isMovingCloser(ballObj, target)) {
+                reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY),
+                                         ballObj->X + ballObj->W/2 - *collisionX ,
+                                         ballObj->Y + ballObj->H/2 - *collisionY);
 
-    if (target->type == OBJECT_WALL){
-        backToUncollidedPosition(ballObj);
-//        printf("ColX %f colY %f\n", *collisionX, *collisionY);
-        float normalX = ballObj->X + ballObj->W/2 - *collisionX,
-                normalY = ballObj->Y + ballObj->H/2 - *collisionY;
-        reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY), -normalX, -normalY);
+                ballObj->veloX *= 0.7;
+                ballObj->veloY *= 0.7;
 
-    } else if (target->type == OBJECT_PLAYER){
-        backToUncollidedPosition(ballObj);
-        printf("velo ball: %f\n", ballObj->veloY);
-        if (isMovingCloser(ballObj, target)) {
-            reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY),
-                                     ballObj->X + ballObj->W/2 - *collisionX ,
-                                     ballObj->Y + ballObj->H/2 - *collisionY);
-
-
-            ballObj->veloX *= 0.7;
-            ballObj->veloY *= 0.7;
-
-        }
-        if(ballObj->veloY <= 200) {
-            ballObj->veloY += target->veloY;
-            ballObj->veloX += target->veloX;
-            printf("*velo ball: %f\n", ballObj->veloY);
-        }
+            }
+            if(ballObj->veloY <= 200) {
+                ballObj->veloY += target->veloY;
+                ballObj->veloX += target->veloX;
+                printf("*velo ball: %f\n", ballObj->veloY);
+            }
+            break;
     }
 }
 
@@ -421,4 +432,6 @@ bool isMovingCloser(Object * source, Object * target){
     float dotProduct = vX*dX + vY*dY;
     return dotProduct < 0;
 }
+
+
 

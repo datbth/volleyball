@@ -6,7 +6,9 @@
 #define GAME_PLAYER_H
 
 #include <SDL2/SDL_scancode.h>
+#include <SDL_mixer.h>
 #include <stdbool.h>
+
 
 enum ObjectType {
     OBJECT_PLAYER,
