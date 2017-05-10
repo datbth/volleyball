@@ -386,6 +386,7 @@ void applyItemCollision(Object *itemObj, Object * target, float *collisionX, flo
             currentItem->needRemove = true;
             break;
         case OBJECT_BALL:
+            Mix_PlayChannel( -1, sounds[7], 0 );
             switch (currentItem->effectType){
                 case EFFECT_FASTER:
                     target->veloY *= currentItem->ratio;

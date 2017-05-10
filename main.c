@@ -31,6 +31,7 @@ struct array_list * objects;
 int numPlayer = 0;
 const Uint8 *currentKeyStates;
 Mix_Chunk *sounds[10];
+Mix_Music *music;
 
 void resetPositions(int teamHasBall){
     /**
@@ -208,7 +209,8 @@ int main(int argc, char *args[]) {
     sounds[numSound++] = Mix_LoadWAV("../sounds/jump2.wav");    // 4
     sounds[numSound++] = Mix_LoadWAV("../sounds/jump3.wav");    // 5
     sounds[numSound++] = Mix_LoadWAV("../sounds/whistle.wav");  // 6
-    sounds[numSound++] = Mix_LoadWAV("../sounds/item.wav");    // 7
+    sounds[numSound++] = Mix_LoadWAV("../sounds/point.wav");    // 7
+    music = Mix_LoadMUS("../sounds/sandstorm.mp3");
 
     //// SETUP CONTROLLER
     currentKeyStates = SDL_GetKeyboardState(NULL);
@@ -281,10 +283,8 @@ int main(int argc, char *args[]) {
 
 
     //// PLAY SOUND WHEN START
-    Mix_PlayChannel( -1, sounds[6], 0 );
-
-
-
+    Mix_PlayMusic(music, -1);
+    
     float lastTime = 0, currentTime;
     int rotation = 0;
     SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
