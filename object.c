@@ -148,7 +148,7 @@ Item *createRandomItem(char *imagePath, int targetIndex, int itemNum){
             newItem->effectType = EFFECT_FASTER;
             break;
         case 1:
-            newItem = createItem(newObject, 1000);
+            newItem = createItem(newObject, 10);
             newItem->effectType = EFFECT_SLOWER;
             break;
         case 2:
@@ -394,8 +394,8 @@ void applyItemCollision(Object *itemObj, Object * target, float *collisionX, flo
                     printf("faster\n");
                     break;
                 case EFFECT_SLOWER:
-                    itemObj->veloY /= currentItem->ratio;
-                    itemObj->veloX /= currentItem->ratio;
+                    target->veloY /= currentItem->ratio;
+                    target->veloX /= currentItem->ratio;
                     printf("slower\n");
                     break;
                 case EFFECT_REFLECT:

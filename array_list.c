@@ -3,7 +3,7 @@
 //
 
 //TODO: create a file named array_list.c, and implement all the following functions in it.
-#include <malloc.h>
+//#include <malloc.h>
 #include "array_list.h"
 #include "object.h"
 
@@ -38,7 +38,7 @@ bool al_append(struct array_list *list, Object *newObj){
     if(list->size == list->capacity){
         Object **newdata = malloc((size_t) (sizeof(Object*) * list->capacity * RESIZE_RATIO));
         if (newdata == NULL) {
-            list->size;
+//            list->size;
             return false;
         }
         //copy
