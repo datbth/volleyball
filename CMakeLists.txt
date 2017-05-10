@@ -26,7 +26,7 @@ set(CMAKE_C_STANDARD 99)
 
 ## For Linux
 
-set(SOURCE_FILES main.c object.c)
+set(SOURCE_FILES main.c object.c array_list.c)
 add_executable(game ${SOURCE_FILES} )
 
 INCLUDE(FindPkgConfig)

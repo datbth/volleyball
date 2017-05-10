@@ -11,6 +11,7 @@
 #include <SDL_ttf.h>
 #include "object.h"
 #include "main.h"
+#include "array_list.h"
 
 
 
@@ -22,11 +23,12 @@ TTF_Font *font;
 char * fontPath = "../DejaVuSans-Bold.ttf";
 const int gravity = 1500;
 const float TIME_PER_FRAME = 1000 / SCREEN_FPS;
-int numObjects = 0;
-int numPlayer = 0;
+//int numObjects = 0;
 float timeScale = 1.0;
 Player *players[4];
-Object *objects[50];
+//Object *objects[];
+struct array_list * objects;
+int numPlayer = 0;
 const Uint8 *currentKeyStates;
 Mix_Chunk *sounds[10];
 
@@ -40,8 +42,8 @@ void resetPositions(int teamHasBall){
     Mix_PlayChannel( -1, sounds[6], 0 );
     if(teamHasBall == 0) teamHasBall = (rand() % 2)+1;
 //    printf("team has ball %i\n", teamHasBall);
-    for (int i = 0; i < numObjects; ++i) {
-        Object * currentObj = objects[i];
+    for (int i = 0; i < objects->size; ++i) {
+        Object * currentObj = objects->data[i];
         currentObj->X = 0;
         currentObj->Y = 0;
         currentObj->veloX = 0;
@@ -179,6 +181,16 @@ bool isElemInArray(int* arr, int elem, int length){
     return false;
 }
 
+int getIntFromArray(char * array){
+    int counter = 0;
+    while (array[counter] != '\0'){
+        if (array[counter] == '0'){
+            return counter;
+        }
+        counter++;
+    }
+}
+
 int main(int argc, char *args[]) {
 
     //// START UP SDL AND CREATE WINDOW
@@ -221,30 +233,45 @@ int main(int argc, char *args[]) {
     getScoreString(scoreString, teamPoint1st, teamPoint2nd);
     scoreTexture = updateScoreTexture(scoreString, scoreColor);
 
+    //// CREATE OBJECT ARRAYLIST
+    struct array_list *temp_objects = al_create();
+    objects = temp_objects;
+
     //// CREATE PLAYER
     SDL_Keycode keycode[] = {SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
                              SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M,
                              SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
                              SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9};
-    char imagePath[] = "../pics/player0.png";
+    char playerImagePath[] = "../pics/player0.png";
+    int targetIndex = getIntFromArray(playerImagePath);
     for (int l = 0; l < 4; l++) {
-        imagePath[14] += 1;
-        Object* object = createObject(l+1, 100, 100, imagePath);
-        players[numPlayer] = createPlayer(object, 250, 675, keycode[l*3+0], keycode[l*3+1], keycode[l*3+2]);
-        objects[numObjects++] = players[numPlayer++]->object;
+        playerImagePath[targetIndex] += 1;
+        Object *object = createObject(objects->size, 100, 100, playerImagePath);
+        players[numPlayer++] = createPlayer(object, 250, 675, keycode[l*3+0], keycode[l*3+1], keycode[l*3+2]);
+        al_append(objects, object);
+//        al_print(objects);
     }
-
     //// CREATE BALL
-    Object * object_b1 = createObject(5, 50, 50, "../pics/ball2.png");
+    Object * object_b1 = createObject(objects->size, 50, 50, "../pics/ball2.png");
     Ball * ball = createBall(object_b1);
-    objects[numObjects++] = object_b1;
+    al_append(objects, object_b1);
 
     //// CREATE WALL
-    Object *object_w1 = createObject(6, 25, objects[0]->H * 3, "../pics/wall.png");
+    //the height of the wall is 3 times player's height
+    Object *object_w1 = createObject(objects->size, 25, objects->data[0]->H * 3, "../pics/wall.png");
     Wall *wall = createWall(object_w1);
-    objects[numObjects++] = wall->object;
+    al_append(objects, object_w1);
 
-    // validate players and set their positions
+    //// SETUP ITEMS SPAWN
+    //    enum ItemType itemList[] = {};
+    char itemImagePath[] = "../pics/item0.png";
+    int itemImagePathIndex = getIntFromArray(itemImagePath);
+    float lastItemSpawnTime = SDL_GetTicks();
+    int itemSpawnTime = (rand() % 3) + 5;
+
+
+//    al_print(objects);
+    //// VALIDATE PLAYERS AND SET THEIR POSITIONS
     int quit = 0;
     for (int j = 0; j < numPlayer; ++j){
         if (players[j] == NULL || players[j]->object == NULL) quit = 1;
@@ -252,15 +279,16 @@ int main(int argc, char *args[]) {
     srand((unsigned int) time(NULL));
     resetPositions(0);
 
+
+    //// PLAY SOUND WHEN START
+    Mix_PlayChannel( -1, sounds[6], 0 );
+
+
+
     float lastTime = 0, currentTime;
     int rotation = 0;
     SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-
-    // Play sound when start
-    Mix_PlayChannel( -1, sounds[6], 0 );
-     // printf("%i\n", sounds[6]);
-
-    // game loop
+    //// GAME LOOP
     while (quit == 0){
         //// GET KEY INPUT
         do {
@@ -289,31 +317,55 @@ int main(int argc, char *args[]) {
         }
         currentTime = SDL_GetTicks();
 
+        //// SPAWN ITEM
+        if(currentTime - lastItemSpawnTime > itemSpawnTime*1000){
+            printf("spawn item\n");
+//            Item * newItem = createItem(newObject, 1.5);
+            Item * newItem = createRandomItem(itemImagePath, itemImagePathIndex, 3);
+            if (newItem != NULL){
+                al_append(objects, newItem->object);
+                itemSpawnTime = (rand() % 3) + 5;
+                lastItemSpawnTime = currentTime;
+            }
+        }
+//        al_print(objects);
+
         //// UPDATE LOGIC POSITION
-        for (int i = 0; i < numObjects; ++i) {
-            updateXY(objects[i], (currentTime - lastTime) * timeScale);
+        for (int i = 0; i < objects->size; ++i) {
+            if (objects->data[i]->type == OBJECT_ITEM) continue;
+            updateXY(objects->data[i], (currentTime - lastTime) * timeScale);
         }
 
         //// CHECK COLLISION AND CORRECT THEIR POSITIONS
-        int checkedObjIndexes[numObjects];
+        int checkedObjIndexes[objects->size];
         int numCheckedObj = 0;
-        for (int i = 0; i < numObjects; ++i) {
-            for (int j = 0; j < numObjects; j++) {
+        for (int i = 0; i < objects->size; ++i) {
+//            if (objects->data[i]->type == OBJECT_WALL) continue;
+            for (int j = 0; j < objects->size; j++) {
                 if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj)) {
                     continue;
                 }
+//                if (objects->data[j]->type == OBJECT_WALL) continue;
 //                printf("Checking %i and %i\n", i,j);
-                checkCollision(objects[i], objects[j]);
-                checkedObjIndexes[numCheckedObj++] = i + 1;
+                checkCollision(objects->data[i], objects->data[j]);
             }
+            checkedObjIndexes[numCheckedObj++] = i + 1;
+        }
+        //// remove items
+//        al_print(objects);
+        for (int l = 0; l < objects->size; ++l) {
+            if (objects->data[l]->type != OBJECT_ITEM) continue;
+            Item * currentItem = (Item *)(objects->data[l]->wrapper);
+            if (currentItem->needRemove) removeItem(currentItem, objects);
         }
         //printf("|%i| X%i Y%i  ", currentPlayer->pos, currentPlayer->X, players[i]->Y);
 
         //// UPDATE UI
         SDL_RenderClear(renderer);  //// clear the last screen
-        for (int k = 0; k < numObjects; ++k) {
-            Object *currentObj = objects[k];
+        for (int k = 0; k < objects->size; ++k) {
+            Object *currentObj = objects->data[k];
             SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
+
             if (currentObj->type == OBJECT_BALL){
                 SDL_RenderCopyEx(renderer, currentObj->image, &background, &position, rotation++, 0, SDL_FLIP_NONE);
             } else {
@@ -323,6 +375,12 @@ int main(int argc, char *args[]) {
         //// UPDATE SCORE
         int teamHasBall = updateScore(ball, &teamPoint1st, &teamPoint2nd);
         if (teamHasBall > 0){
+            //remove item
+            for (int i = objects->size-1; i > 5; i--) {
+                if (objects->data[i]->type == OBJECT_ITEM){
+                    removeItem((Item *)(objects->data[i]->wrapper), objects);
+                }
+            }
             resetPositions(teamHasBall);
 //            timeScale = 0;
             SDL_Delay(1000);
@@ -335,33 +393,33 @@ int main(int argc, char *args[]) {
 
         //// RENDER
         SDL_RenderPresent(renderer);
-
         lastTime = currentTime;
     }
 
 
-    //// Free resources and close SDL
+    //// FREE RESOURCES AND CLOSE SDL
     printf("free objects ");
-    for (int m = 0; m < numObjects; ++m) {
-        Object *currentObj = objects[m];
+    for (int m = 0; m < objects->size; ++m) {
+        Object *currentObj = objects->data[m];
         if(currentObj){
-            free(currentObj->wrapper);
-            SDL_DestroyTexture(currentObj->image);
-            free(currentObj);
+            freeObject(currentObj);
             printf("%i ", m);
         }
     }
+
     printf("\n");
+    al_free(objects);
+
     SDL_DestroyRenderer(renderer); renderer = NULL;
     SDL_DestroyWindow(window); window = NULL;
     TTF_CloseFont(font); font = NULL;
 
-    // free / quite sound
-    for (int i = 0; i < numSound; ++i)
-    {
-    Mix_FreeChunk(sounds[i]);sounds[i] = NULL;
+    //// FREE SOUND
+    for (int i = 0; i < numSound; ++i){
+        Mix_FreeChunk(sounds[i]);sounds[i] = NULL;
     }
-    //Quit SDL subsystems
+
+    //// QUIT SDL SUBSYSTEMS
     Mix_Quit();
     TTF_Quit();
     IMG_Quit();

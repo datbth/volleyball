@@ -7,8 +7,12 @@
 
 #include <SDL2/SDL_scancode.h>
 #include <SDL_mixer.h>
+#include <SDL_image.h>
+#include <SDL.h>
 #include <stdbool.h>
+#include "array_list.h"
 
+struct array_list* objects;
 
 enum ObjectType {
     OBJECT_PLAYER,
@@ -20,6 +24,12 @@ enum ObjectType {
 enum ShapeType {
     SHAPE_CIRCLE,
     SHAPE_RECTANGLE
+};
+
+enum EffectType {
+    EFFECT_FASTER,
+    EFFECT_SLOWER,
+    EFFECT_REFLECT
 };
 
 typedef struct Object Object;
@@ -49,6 +59,13 @@ typedef struct {
 typedef struct {
     Object * object;
 } Wall;
+
+typedef struct {
+    Object * object;
+    enum EffectType effectType;
+    float ratio;
+    bool needRemove;
+} Item;
 
 /**
  * create Object
@@ -80,21 +97,11 @@ Player *createPlayer(Object* object, int speedX, int jumpHeight, SDL_Keycode up,
  */
 Ball *createBall(Object * object);
 Wall *createWall(Object * object);
+Item *createItem(Object* object, float ratio);
+Item *createRandomItem(char *imagePath, int targetIndex, int itemNum);
 
 void freeObject(Object * object);
-
-/**
- * free player
- * @param player
- */
-void freePlayer(Player * player);
-
-/**
- * free ball
- * @param ball
- */
-void freeBall(Ball * ball);
-void freeWall(Wall * wall);
+void removeItem(Item * item, struct array_list* objects);
 
 /**
  * set velocity X for player
@@ -180,6 +187,7 @@ float distSquare(Object * source, Object * target);
 
 void applyWallCollision(Object *source, Object *target, float *collisionX, float *collisionY);
 void applyPlayerCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+void applyItemCollision(Object *itemObj, Object * target, float *collisionX, float *collisionY);
 
 /**
  * Apply reaction when the ball collide with other objects

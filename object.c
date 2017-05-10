@@ -10,9 +10,7 @@
 #include "stdbool.h"
 #include "math.h"
 #include "main.h"
-
-
-
+#include "array_list.h"
 /**
  * player-player: block each other
  * player-wall: block each other
@@ -47,8 +45,12 @@ Object *createObject(int id, int W, int H, char* imagePath){
 }
 
 void freeObject(Object * object){
-    SDL_DestroyTexture(object->image);
-    free(object);
+    if(object != NULL){
+        if(object->wrapper != NULL) free(object->wrapper);
+        SDL_DestroyTexture(object->image);
+        printf("free obj id%i\n", object->id);
+        free(object);
+    }
 }
 
 Player *createPlayer(Object* object,int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right){
@@ -78,12 +80,6 @@ Player *createPlayer(Object* object,int speedX, int jumpHeight, SDL_Keycode up, 
     return player;
 }
 
-void freePlayer(Player * player){
-    if (player == NULL) return;
-    freeObject(player->object);
-    free(player);
-}
-
 Wall *createWall(Object* object) {
     Wall *wall = malloc(sizeof(Wall));
     if (wall == NULL){
@@ -99,14 +95,12 @@ Wall *createWall(Object* object) {
     return wall;
 }
 
-void freeWall(Wall * wall){
-    if (wall == NULL ) return;
-    if (wall->object != NULL) freeObject(wall->object);
-    free(wall);
-}
-
 Ball *createBall(Object * object){
     Ball * ball = malloc(sizeof(Ball));
+    if (ball == NULL) {
+        freeObject(object);
+        return NULL;
+    }
     ball->object = object;
     ball->object->type = OBJECT_BALL;
     ball->object->wrapper = ball;
@@ -115,10 +109,61 @@ Ball *createBall(Object * object){
     return ball;
 }
 
-void freeBall(Ball * ball){
-    if (ball == NULL) return;
-    if (ball->object != NULL) freeObject(ball->object);
-    free(ball);
+Item *createItem(Object* object, float ratio) {
+    Item *item = malloc(sizeof(Item));
+    if (item == NULL){
+        freeObject(object);
+        return NULL;
+    }
+
+    item->object = object;
+    item->object->type = OBJECT_ITEM;
+    item->object->wrapper = item;
+    item->object->shapeType = SHAPE_CIRCLE;
+    item->object->applyCollision = &applyItemCollision;
+    item->ratio = ratio;
+    item->needRemove = false;
+    return item;
+}
+
+Item *createRandomItem(char *imagePath, int targetIndex, int itemNum){
+//    enum ItemType itemList[] = {};
+//    char imagePath[] = "../pics/item0.png";
+    Item * newItem = NULL;
+    int randomPos = rand() % itemNum;
+    printf("target %i itemNum %i random pos%i\n",targetIndex, itemNum, randomPos);
+    imagePath[targetIndex] += randomPos+1;
+    printf("%s\n", imagePath);
+    Object * newObject = createObject(objects->size, 50, 50, imagePath);
+    imagePath[targetIndex] -= randomPos+1;
+    printf("%s\n", imagePath);
+    if(newObject == NULL) return NULL;
+    // initialize position
+    newObject->X = SCREEN_WIDTH/2 - newObject->W/2;
+    newObject->Y =  SCREEN_HEIGHT/6 + (newObject->H+20)  * (rand() % 4);
+    // random effect
+    switch (randomPos){
+        case 0:
+            newItem = createItem(newObject, 3);
+            newItem->effectType = EFFECT_FASTER;
+            break;
+        case 1:
+            newItem = createItem(newObject, 1000);
+            newItem->effectType = EFFECT_SLOWER;
+            break;
+        case 2:
+            newItem = createItem(newObject, 3);
+            newItem->effectType = EFFECT_REFLECT;
+            break;
+        default:break;
+    }
+    return newItem;
+}
+
+void removeItem(Item * item, struct array_list* objects){
+    if(item == NULL) return;
+    al_remove(objects, item->object->id);
+    freeObject(item->object);
 }
 
 void setVeloX(Object *player, float veloX) {
@@ -137,7 +182,6 @@ void updateXY(Object *object, float moveTime) {
 
     // first frame of the game
 //    if (object->lastMoveTime == 0) object->lastMoveTime = newFrameTime;
-
 //    float moveTime = (newFrameTime - object->lastMoveTime) / 1000;
 
     object->X += object->veloX * moveTime;  //update X
@@ -175,7 +219,7 @@ void updateXY(Object *object, float moveTime) {
     if (object->type == OBJECT_PLAYER){
         ((Player*)(object->wrapper))->isCollided = false;
     }
-//                printf("|%i| X%f Y%f velX%f velY%f \n  ", object->id, object->X, object->Y, object->veloX, object->veloY);
+//    printf("|%i| X%f Y%f velX%f velY%f \n  ", object->id, object->X, object->Y, object->veloX, object->veloY);
 }
 
 void move(Player *player, int left, int up, int right) {
@@ -243,15 +287,11 @@ void pushOut(Object *pushedObj, float stableX, float stableY, float targetDistan
         printf("pushedDistance: %f", pushedDistance);
     }
 }
+
 void backToUncollidedPosition(Object *object){
     if (object->type != OBJECT_WALL) {
-//        if(object->type == OBJECT_PLAYER) printf("X %f Y %f, oldX %f, oldY %f\n", object->X, object->Y, object->oldX, object->oldY);
-//        float temp = object->X;
         object->X = object->oldX;
-//        object->oldX = temp;
-//        temp = object->Y;
         object->Y = object->oldY;
-//        object->oldY = temp;
     }
 }
 
@@ -318,7 +358,7 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
             // Play sound when ball collide
             if (ballObj->veloY >= 200) Mix_PlayChannel( -1, sounds[ rand()%3], 0 );
             backToUncollidedPosition(ballObj);
-            printf("velo ball: %f\n", ballObj->veloY);
+//            printf("velo ball: %f\n", ballObj->veloY);
             if (isMovingCloser(ballObj, target)) {
                 reflectVectorAboutVector(&(ballObj->veloX), &(ballObj->veloY),
                                          ballObj->X + ballObj->W/2 - *collisionX ,
@@ -331,11 +371,44 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
             if(ballObj->veloY <= 200) {
                 ballObj->veloY += target->veloY;
                 ballObj->veloX += target->veloX;
-                printf("*velo ball: %f\n", ballObj->veloY);
+//                printf("*velo ball: %f\n", ballObj->veloY);
             }
             break;
         case OBJECT_BALL:break;
         case OBJECT_ITEM:break;
+    }
+}
+
+void applyItemCollision(Object *itemObj, Object * target, float *collisionX, float *collisionY){
+    Item *currentItem = (Item*)(itemObj->wrapper);
+    switch(target->type){
+        case OBJECT_PLAYER:
+            currentItem->needRemove = true;
+            break;
+        case OBJECT_BALL:
+            switch (currentItem->effectType){
+                case EFFECT_FASTER:
+                    target->veloY *= currentItem->ratio;
+                    target->veloX *= currentItem->ratio;
+                    printf("faster\n");
+                    break;
+                case EFFECT_SLOWER:
+                    itemObj->veloY /= currentItem->ratio;
+                    itemObj->veloX /= currentItem->ratio;
+                    printf("slower\n");
+                    break;
+                case EFFECT_REFLECT:
+                    target->veloY *= -1;
+                    target->veloX *= -1;
+                    printf("reflect\n");
+                    break;
+            }
+            currentItem->needRemove = true;
+            break;
+        case OBJECT_ITEM:
+            if(itemObj->id < target->id) currentItem->needRemove = true;
+            break;
+        case OBJECT_WALL:break;
     }
 }
 
@@ -399,7 +472,6 @@ int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, floa
     *vectorY = -(coefficient * normalY - *vectorY);
     return 0;
 }
-
 
 void checkCollision(Object * source, Object *target) {
     bool collided = false;
