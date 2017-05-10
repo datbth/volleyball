@@ -201,14 +201,14 @@ int main(int argc, char *args[]) {
 
     // SETUP SOUNDS
     int numSound = 0;
-    sounds[numSound++] = Mix_LoadWAV("../sounds/hit1.wav");
-    sounds[numSound++] = Mix_LoadWAV("../sounds/hit2.wav");
-    sounds[numSound++] = Mix_LoadWAV("../sounds/hit3.wav");
-    sounds[numSound++] = Mix_LoadWAV("../sounds/jump1.wav");
-    sounds[numSound++] = Mix_LoadWAV("../sounds/jump2.wav");
-    sounds[numSound++] = Mix_LoadWAV("../sounds/jump3.wav");
-    sounds[numSound++] = Mix_LoadWAV("../sounds/whistle.wav");
-
+    sounds[numSound++] = Mix_LoadWAV("../sounds/hit1.wav");     // 0
+    sounds[numSound++] = Mix_LoadWAV("../sounds/hit2.wav");     // 1
+    sounds[numSound++] = Mix_LoadWAV("../sounds/hit3.wav");     // 2
+    sounds[numSound++] = Mix_LoadWAV("../sounds/jump1.wav");    // 3
+    sounds[numSound++] = Mix_LoadWAV("../sounds/jump2.wav");    // 4
+    sounds[numSound++] = Mix_LoadWAV("../sounds/jump3.wav");    // 5
+    sounds[numSound++] = Mix_LoadWAV("../sounds/whistle.wav");  // 6
+    sounds[numSound++] = Mix_LoadWAV("../sounds/item.wav");    // 7
 
     //// SETUP CONTROLLER
     currentKeyStates = SDL_GetKeyboardState(NULL);
@@ -418,6 +418,7 @@ int main(int argc, char *args[]) {
     for (int i = 0; i < numSound; ++i){
         Mix_FreeChunk(sounds[i]);sounds[i] = NULL;
     }
+    Mix_FreeMusic(music); music=NULL;
 
     //// QUIT SDL SUBSYSTEMS
     Mix_Quit();
