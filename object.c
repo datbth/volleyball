@@ -509,6 +509,3 @@ bool isMovingCloser(Object * source, Object * target){
     float dotProduct = vX*dX + vY*dY;
     return dotProduct < 0;
 }
-
-
-
