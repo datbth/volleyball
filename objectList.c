@@ -2,43 +2,39 @@
 // Created by bit on 5/8/17.
 //
 
-//TODO: create a file named array_list.c, and implement all the following functions in it.
-#include <malloc.h>
-#include "array_list.h"
+//#include <malloc.h>
+#include "objectList.h"
 #include "object.h"
 
 #define SIZE 10
 #define RESIZE_RATIO 1.5
 
-/**
- * Create an array list by allocating a struct array_list and init its contents to an empty list.
- * @return a pointer to a newly allocated struct array_list, or NULL if it cannot be allocated
- */
-struct array_list *al_create(){
-    struct array_list * arrayList = malloc(sizeof(struct array_list));
-    if(arrayList == NULL) {
+struct objectList *objCreate(){
+    struct objectList * objectList = malloc(sizeof(struct objectList));
+    if(objectList == NULL) {
         return NULL;
     }
-    arrayList->capacity = SIZE;
-    arrayList->size = 0;
-    arrayList->data = malloc(sizeof(Object)*arrayList->capacity);
-    if (arrayList->data == NULL){
-        free(arrayList);
+    objectList->capacity = SIZE;
+    objectList->size = 0;
+    objectList->numPlayer = 0;
+    objectList->data = malloc(sizeof(Object)*objectList->capacity);
+    if (objectList->data == NULL){
+        free(objectList);
         return NULL;
     }
     //initialize
-    for (int i = 0; i < arrayList->capacity; ++i) {
-        arrayList->data[i] = NULL;
+    for (int i = 0; i < objectList->capacity; ++i) {
+        objectList->data[i] = NULL;
     }
-    return arrayList;
+    return objectList;
 }
 
-bool al_append(struct array_list *list, Object *newObj){
+bool objAppend(struct objectList *list, Object *newObj){
     // resize
     if(list->size == list->capacity){
         Object **newdata = malloc((size_t) (sizeof(Object*) * list->capacity * RESIZE_RATIO));
         if (newdata == NULL) {
-            list->size;
+//            list->size;
             return false;
         }
         //copy
@@ -55,24 +51,23 @@ bool al_append(struct array_list *list, Object *newObj){
     }
     //insert
     list->data[list->size] = newObj;
-    printf("list->size %i\n", list->size);
+//    printf("list->size %i\n", list->size);
     list->size++;
     return true;
 }
 
-bool al_remove(struct array_list *list, int position){
-    printf("removing");
+bool al_remove(struct objectList *list, int position){
+//    printf("removing");
     //validate
     if(position < 0 || position >= list->size){
-        printf("wrong position\n");
+//        printf("wrong position\n");
         return false;
     }
-    // remove value
 
     //shift all value to the left starting at this position
 //    al_print(list);
     for (int i = position; i < list->size - 1; ++i) {
-        printf("<%p>", list->data[i]);
+//        printf("<%p>", list->data[i]);
         list->data[i] = list->data[i+1];
         list->data[i]->id -= 1;
     }
@@ -81,7 +76,7 @@ bool al_remove(struct array_list *list, int position){
     return true;
 }
 
-void al_free(struct array_list *list){
+void al_free(struct objectList *list){
     if(list != NULL) {
         if(list->data != NULL){
             free(list->data);
@@ -90,7 +85,7 @@ void al_free(struct array_list *list){
     }
 }
 
-void al_print(struct array_list *list){
+void al_print(struct objectList *list){
     for (int i = 0; i < list->size; ++i) {
         printf("object pointer %p id%i \n", list->data[i], list->data[i]->id);
 //        printf("object pointer %p \n", list->data[i]);

@@ -10,7 +10,7 @@
 #include "stdbool.h"
 #include "math.h"
 #include "main.h"
-#include "array_list.h"
+#include "objectList.h"
 /**
  * player-player: block each other
  * player-wall: block each other
@@ -23,7 +23,7 @@
  */
 
 Object *createObject(int id, int W, int H, char* imagePath){
-    SDL_Texture *icon = loadTexture(imagePath, renderer);
+    SDL_Texture *icon = loadTexture(imagePath);
     if (icon == NULL) return NULL;
 //    printf("sizeof Object %lu int %lu float %lu void %lu \n", sizeof(Object), sizeof(int), sizeof(float), sizeof(void));
     Object *object = malloc(sizeof(Object));
@@ -48,7 +48,7 @@ void freeObject(Object * object){
     if(object != NULL){
         if(object->wrapper != NULL) free(object->wrapper);
         SDL_DestroyTexture(object->image);
-        printf("free obj id%i\n", object->id);
+//        printf("free obj id%i\n", object->id);
         free(object);
     }
 }
@@ -76,7 +76,7 @@ Player *createPlayer(Object* object,int speedX, int jumpHeight, SDL_Keycode up, 
     player->right = right;
     player->speedX = speedX;
     player->jumpHeight = jumpHeight;
-    player->onGround = false;
+    player->isOnGround = false;
     return player;
 }
 
@@ -131,12 +131,12 @@ Item *createRandomItem(char *imagePath, int targetIndex, int itemNum){
 //    char imagePath[] = "../pics/item0.png";
     Item * newItem = NULL;
     int randomPos = rand() % itemNum;
-    printf("target %i itemNum %i random pos%i\n",targetIndex, itemNum, randomPos);
+//    printf("target %i itemNum %i random pos%i\n",targetIndex, itemNum, randomPos);
     imagePath[targetIndex] += randomPos+1;
-    printf("%s\n", imagePath);
+//    printf("%s\n", imagePath);
     Object * newObject = createObject(objects->size, 50, 50, imagePath);
     imagePath[targetIndex] -= randomPos+1;
-    printf("%s\n", imagePath);
+//    printf("%s\n", imagePath);
     if(newObject == NULL) return NULL;
     // initialize position
     newObject->X = SCREEN_WIDTH/2 - newObject->W/2;
@@ -144,11 +144,11 @@ Item *createRandomItem(char *imagePath, int targetIndex, int itemNum){
     // random effect
     switch (randomPos){
         case 0:
-            newItem = createItem(newObject, 3);
+            newItem = createItem(newObject, 2);
             newItem->effectType = EFFECT_FASTER;
             break;
         case 1:
-            newItem = createItem(newObject, 1000);
+            newItem = createItem(newObject, 2);
             newItem->effectType = EFFECT_SLOWER;
             break;
         case 2:
@@ -160,7 +160,7 @@ Item *createRandomItem(char *imagePath, int targetIndex, int itemNum){
     return newItem;
 }
 
-void removeItem(Item * item, struct array_list* objects){
+void removeItem(Item * item, struct objectList* objects){
     if(item == NULL) return;
     al_remove(objects, item->object->id);
     freeObject(item->object);
@@ -170,7 +170,7 @@ void setVeloX(Object *player, float veloX) {
     player->veloX = veloX;
 }
 
-void updateXY(Object *object, float moveTime) {
+void updateXY(Object *object, float moveTime, int gravity) {
     if(moveTime <= 0) return;
     moveTime /= 1000;
 
@@ -194,7 +194,7 @@ void updateXY(Object *object, float moveTime) {
     if (object->Y >= SCREEN_HEIGHT - object->H) {
         object->Y = SCREEN_HEIGHT - object->H;
         if(object->type == OBJECT_PLAYER) {
-            ((Player*) object->wrapper)->onGround = true ;
+            ((Player*) object->wrapper)->isOnGround = true ;
             object->veloY = 0;
         } else if(object->type == OBJECT_BALL) {
             reflectVectorAboutVector(&(object->veloX), &(object->veloY), 0, -object->H);
@@ -202,7 +202,7 @@ void updateXY(Object *object, float moveTime) {
 
     } else {
         if(object->type == OBJECT_PLAYER) {
-            ((Player*) object->wrapper)->onGround = false ;
+            ((Player*) object->wrapper)->isOnGround = false ;
         }
     }
     // touched the left side of the screen
@@ -226,20 +226,20 @@ void move(Player *player, int left, int up, int right) {
 //    if(player->isCollided) return;
     float veloX = 0;
 
-    if (!player->onGround) veloX = player->object->veloX;
+    if (!player->isOnGround) veloX = player->object->veloX;
     else if (left == 0 && right == 0) veloX = 0;
 
-    if (player->onGround || player->object->veloX == 0){
+    if (player->isOnGround || player->object->veloX == 0){
         if (left == 1 && right == 0) veloX = -player->speedX;
         else if (right == 1 && left == 0) veloX = player->speedX;
     }
 //    veloX = (right == 1) ? speedX : 0;
 
-    if (up == 1 && player->onGround) {
+    if (up == 1 && player->isOnGround) {
 //	  veloY -= 50;
         player->object->accelY = -100;
         player->object->veloY = -player->jumpHeight;
-        //player->onGround = false;
+        //player->isOnGround = false;
 
         // Play sound when jump
         Mix_PlayChannel( -1, sounds[ 3+ rand()%3], 0 );
@@ -324,7 +324,7 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
 
                 float targetCenterToCollisionY = *collisionY - (target->Y + target->H / 2);
                 if (targetCenterToCollisionY < 0) {
-                    ((Player *) (playerObj->wrapper))->onGround = true;
+                    ((Player *) (playerObj->wrapper))->isOnGround = true;
                     ((Player *) (playerObj->wrapper))->isCollided = false;
                 }
             }
@@ -391,17 +391,17 @@ void applyItemCollision(Object *itemObj, Object * target, float *collisionX, flo
                 case EFFECT_FASTER:
                     target->veloY *= currentItem->ratio;
                     target->veloX *= currentItem->ratio;
-                    printf("faster\n");
+//                    printf("faster\n");
                     break;
                 case EFFECT_SLOWER:
-                    itemObj->veloY /= currentItem->ratio;
-                    itemObj->veloX /= currentItem->ratio;
-                    printf("slower\n");
+                    target->veloY /= currentItem->ratio;
+                    target->veloX /= currentItem->ratio;
+//                    printf("slower\n");
                     break;
                 case EFFECT_REFLECT:
                     target->veloY *= -1;
                     target->veloX *= -1;
-                    printf("reflect\n");
+//                    printf("reflect\n");
                     break;
             }
             currentItem->needRemove = true;

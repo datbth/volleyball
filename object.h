@@ -10,9 +10,9 @@
 #include <SDL_image.h>
 #include <SDL.h>
 #include <stdbool.h>
-#include "array_list.h"
+#include "objectList.h"
 
-struct array_list* objects;
+struct objectList* objects;
 
 enum ObjectType {
     OBJECT_PLAYER,
@@ -49,7 +49,7 @@ typedef struct {
     Object *object;
     SDL_Keycode up, left, right;
     int speedX, jumpHeight;
-    bool onGround, isCollided;
+    bool isOnGround, isCollided, isTeamLeft;
 } Player;
 
 typedef struct {
@@ -70,8 +70,6 @@ typedef struct {
 /**
  * create Object
  * @param id : integer id
- * @param X : float of X
- * @param Y : float of Y
  * @param W : integer of Width
  * @param H : integer of Height
  * @param imagePath : pointer to string of char
@@ -101,7 +99,7 @@ Item *createItem(Object* object, float ratio);
 Item *createRandomItem(char *imagePath, int targetIndex, int itemNum);
 
 void freeObject(Object * object);
-void removeItem(Item * item, struct array_list* objects);
+void removeItem(Item * item, struct objectList* objects);
 
 /**
  * set velocity X for player
@@ -122,7 +120,7 @@ void setVeloY(Object *player, float veloY);
  * @param object : pointer to Object
  * @param newFrameTime : float of new frame time
  */
-void updateXY(Object *object, float newFrameTime);
+void updateXY(Object *object, float newFrameTime, int gravity);
 
 /**
  * move the player according to when the corresponding key if pressed
