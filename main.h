@@ -25,7 +25,7 @@ SDL_Window *init();
  * handle keys when they are pressed
  * move players
  * quit when Ctrl + Q are pressed
- * @return
+ * @return 0
  */
 int handleKeys();
 
@@ -34,7 +34,7 @@ int handleKeys();
  * @param arr : pointer to integer array
  * @param elem : integer element
  * @param length : length of array in integer
- * @return bool
+ * @return true if element is in array/ false if not
  */
 bool isElemInArray(int* arr, int elem, int length);
 
