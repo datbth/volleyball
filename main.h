@@ -38,6 +38,54 @@ int handleKeys();
  */
 bool isElemInArray(int* arr, int elem, int length);
 
+/**
+ *
+ * @param array pointer to array of character
+ * @return -1 if there is integer in array / 0 if nothing in array
+ */
+int getIntFromArray(char * array);
 
+/**
+ * reset positions
+ * @param teamHasBall integer to determine which team has ball
+ */
+void resetPositions(int teamHasBall);
+
+/**
+ *
+ * @param string pointer to string
+ * @param teamPoint1st integer of point team 1
+ * @param teamPoint2nd integer of point team 2
+ */
+void getScoreString(char *string, int teamPoint1st, int teamPoint2nd);
+
+/**
+ *
+ * @param ball pointer to Ball
+ * @param teamPoint1st pointer to integer point team 1
+ * @param teamPoint2nd pointer to integer point team 2
+ * @param winningTeam pointer to integer win 
+ */
+int updateScore(Ball *ball, int *teamPoint1st, int *teamPoint2nd, int *winningTeam);
+
+/**
+ *
+ * @param color Color of SDL
+ * @param fontX integer of font X
+ * @param fontY interger of font Y
+ * @param background pointer to background
+ */
+void showInstruction(SDL_Color color, int fontX, int fontY, SDL_Rect *background);
+
+/**
+ * Pause the game
+ */
+void togglePause();
+
+/**
+ * remove items
+ * @param checkNeedRemove boolean
+ */
+void cleanItems(bool checkNeedRemove);
 
 #endif //GAME_GLOBALVARIABLES_H
