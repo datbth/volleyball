@@ -219,10 +219,10 @@ int handleKeys() {
 
 	for (int i = 0; i < objects->numPlayer; ++i) {
 		Player *player = players[i];
-		move(player,
-			 currentKeyStates[player->left],
-			 currentKeyStates[player->up],
-			 currentKeyStates[player->right]);
+        player_move(player,
+                    currentKeyStates[player->left],
+                    currentKeyStates[player->up],
+                    currentKeyStates[player->right]);
 	}
 	return 0;
 }
@@ -233,10 +233,10 @@ void cleanItems(bool checkNeedRemove){
             Item * currentItem = (Item *)(objects->data[i]->wrapper);
             if(checkNeedRemove) {
                 if (currentItem->needRemove) {
-                    removeItem(currentItem, objects);
+                    item_removeFromList(currentItem, objects);
                 }
             } else {
-                removeItem(currentItem, objects);
+                item_removeFromList(currentItem, objects);
             }
         }
     }
@@ -276,7 +276,7 @@ void cleanObjects(struct objectList *objects){
         Object *currentObj = objects->data[m];
         if(currentObj){
             printf("id: %i\n", currentObj->id);
-            freeObject(currentObj);
+            obj_free(currentObj);
         }
     }
     objects->size = 0;
@@ -294,21 +294,22 @@ void createGameObj(int desiredPlayers, struct objectList *objects){
     int targetIndex = getIntFromArray(playerImagePath);
     for (int l = 0; l < desiredPlayers; l++) {
         playerImagePath[targetIndex] += 1;
-        Object *object = createObject(objects->size, 100, 100, playerImagePath);
+        Object *object = obj_create(objects->size, 100, 100, playerImagePath);
         if(desiredPlayers == 2 ) l *= 2;
 
-        players[objects->numPlayer++] = createPlayer(object, 1000/desiredPlayers, 700, keycode[l*3+0], keycode[l*3+1], keycode[l*3+2]);
+        players[objects->numPlayer++] = player_create(object, 1000 / desiredPlayers, 700, keycode[l * 3 + 0],
+                                                      keycode[l * 3 + 1], keycode[l * 3 + 2]);
         objAppend(objects, object);
     }
     //// CREATE BALL
-    Object *object_b1 = createObject(objects->size, 50, 50, "../pics/ball2.png");
-    createBall(object_b1);
+    Object *object_b1 = obj_create(objects->size, 50, 50, "../pics/ball2.png");
+    ball_create(object_b1);
     objAppend(objects, object_b1);
 
     //// CREATE WALL
     //the height of the wall is 3 times player's height
-    Object *object_w1 = createObject(objects->size, 25, objects->data[0]->H * 3, "../pics/wall.png");
-    createWall(object_w1);
+    Object *object_w1 = obj_create(objects->size, 25, objects->data[0]->H * 3, "../pics/wall.png");
+    wall_create(object_w1);
     objAppend(objects, object_w1);
 }
 
@@ -444,7 +445,7 @@ int main(int argc, char *args[]) {
 
 		//// SPAWN ITEM
 		if(currentTime - lastItemSpawnTime > itemSpawnTime*1000){
-			Item * newItem = createRandomItem(itemImagePath, itemImagePathIndex, 3);
+			Item * newItem = item_createRandomly(itemImagePath, itemImagePathIndex, 3);
 			if (newItem != NULL){
                 objAppend(objects, newItem->object);
 				itemSpawnTime = (rand() % 3) + 5;
@@ -456,7 +457,7 @@ int main(int argc, char *args[]) {
 		//// UPDATE LOGIC POSITION
 		for (int i = 0; i < objects->size; ++i) {
 			if (objects->data[i]->type == OBJECT_ITEM) continue;
-			updateXY(objects->data[i], (currentTime - lastTime) * timeScale, gravity);
+            obj_update(objects->data[i], (currentTime - lastTime) * timeScale, gravity);
 		}
 
 		//// CHECK COLLISION AND CORRECT THEIR POSITIONS
@@ -468,7 +469,7 @@ int main(int argc, char *args[]) {
 					continue;
 				}
 //                printf("Checking %i and %i\n", i,j);
-				checkCollision(objects->data[i], objects->data[j]);
+                obj_checkCollision(objects->data[i], objects->data[j]);
 			}
 			checkedObjIndexes[numCheckedObj++] = i + 1;
 		}

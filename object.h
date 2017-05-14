@@ -77,7 +77,7 @@ typedef struct {
  * @param imagePath : pointer to string of char
  * @return object
  */
-Object *createObject(int id,int W, int H, char* imagePath);
+Object *obj_create(int id, int W, int H, char *imagePath);
 
 /**
  * create a struct Player
@@ -89,20 +89,20 @@ Object *createObject(int id,int W, int H, char* imagePath);
  * @param right : key input for moving RIGHT
  * @return player
  */
-Player *createPlayer(Object* object, int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
+Player *player_create(Object *object, int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
 /**
  * create ball
  * @param object pointer to Object
  * @return ball if create successful / NULL if not
  */
-Ball *createBall(Object * object);
+Ball *ball_create(Object *object);
 
 /**
  * create wall
  * @param object pointer to Object
  * @return wall  if create successful / NULL if not
  */
-Wall *createWall(Object * object);
+Wall *wall_create(Object *object);
 
 /**
  *
@@ -110,7 +110,7 @@ Wall *createWall(Object * object);
  * @param ratio float ratio of object
  * @return item if create successful / NULL if not
  */
-Item *createItem(Object* object, float ratio);
+Item *item_create(Object *object, float ratio);
 
 /**
  * Create random items
@@ -119,27 +119,27 @@ Item *createItem(Object* object, float ratio);
  * @param itemNum number of items
  * @return newItem  if create successful / NULL if not
  */
-Item *createRandomItem(char *imagePath, int targetIndex, int itemNum);
+Item *item_createRandomly(char *imagePath, int targetIndex, int itemNum);
 
 /**
  * free object
  * @param object Choose pointer to object to free
  */
-void freeObject(Object * object);
+void obj_free(Object *object);
 
 /**
  *  Remove item
  * @param item Choose item to remove
  * @param objects Choose pointer to object to free
  */
-void removeItem(Item * item, struct objectList* objects);
+void item_removeFromList(Item *item, struct objectList *objects);
 
 /**
  * set velocity X for player
  * @param player : pointer to Player
  * @param veloX : float velocity X
  */
-void setVeloX(Object *player, float veloX);
+void obj_setVeloX(Object *player, float veloX);
 
 /**
  * set velocity Y for player
@@ -153,7 +153,7 @@ void setVeloY(Object *player, float veloY);
  * @param object : pointer to Object
  * @param newFrameTime : float of new frame time
  */
-void updateXY(Object *object, float newFrameTime, int gravity);
+void obj_update(Object *object, float newFrameTime, int gravity);
 
 /**
  * move the player according to when the corresponding key if pressed
@@ -162,7 +162,7 @@ void updateXY(Object *object, float newFrameTime, int gravity);
  * @param up : integer of Up key
  * @param right : integer of Right key
  */
-void move(Player *player, int left, int up, int right);
+void player_move(Player *player, int left, int up, int right);
 
 /**
  *
@@ -178,7 +178,7 @@ bool setPlayerOnGround(Player *player);
  * @param X : pointer to collision pointX
  * @param Y : pointer to collision pointY
  */
-bool isCircleCollided(Object *A, Object *B, float *collisionX, float *collisionY);
+bool obj_areCirclesCollided(Object *A, Object *B, float *collisionX, float *collisionY);
 
 /**
  *
@@ -188,7 +188,7 @@ bool isCircleCollided(Object *A, Object *B, float *collisionX, float *collisionY
  * @param collisionY Pointer to float collision Y
  * @return true if collided / false if not
  */
-bool isWallCollided(Object *circle, Object *rectangle, float *collisionX, float *collisionY);
+bool obj_areCircleRectCollided(Object *circle, Object *rectangle, float *collisionX, float *collisionY);
 
 /**
  *
@@ -204,7 +204,7 @@ void getCollideXY(float *X, float *Y, Object* A, Object *B);
  * @param source : pointer to object Source
  * @param target : pointer to object Target
  */
-void checkCollision(Object * source, Object * target);
+void obj_checkCollision(Object *source, Object *target);
 
 /**
  * check if the source object is moving toward the target or not
@@ -212,7 +212,7 @@ void checkCollision(Object * source, Object * target);
  * @param target : pointer to target object
  * @return true if 2 objects move closer
  */
-bool isMovingCloser(Object * source, Object * target);
+bool obj_isMovingCloser(Object *source, Object *target);
 
 /**
  *
@@ -239,7 +239,7 @@ float distSquare(Object * source, Object * target);
  * @param collisionX pointer to float collision X
  * @param collisionY pointer to float collision Y
  */
-void applyWallCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+void wall_applyCollision(Object *source, Object *target, float *collisionX, float *collisionY);
 
 /**
  * Apply effect on Player depends on colliding with different object
@@ -248,7 +248,7 @@ void applyWallCollision(Object *source, Object *target, float *collisionX, float
  * @param collisionX pointer to float collision X
  * @param collisionY pointer to float collision Y
  */
-void applyPlayerCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+void player_applyCollision(Object *source, Object *target, float *collisionX, float *collisionY);
 
 /**
  * Apply effect on Item depends on colliding with different object
@@ -257,7 +257,7 @@ void applyPlayerCollision(Object *source, Object *target, float *collisionX, flo
  * @param collisionX pointer to float collision X
  * @param collisionY pointer to float collision Y
  */
-void applyItemCollision(Object *itemObj, Object * target, float *collisionX, float *collisionY);
+void item_applyCollision(Object *itemObj, Object *target, float *collisionX, float *collisionY);
 
 /**
  * Apply effect on Ball depends on colliding with different object
@@ -266,7 +266,7 @@ void applyItemCollision(Object *itemObj, Object * target, float *collisionX, flo
  * @param collisionX pointer to float collision X
  * @param collisionY pointer to float collision Y
  */
-void applyBallCollision(Object *ballObj, Object * target, float *collisionX, float *collisionY);
+void ball_applyCollision(Object *ballObj, Object *target, float *collisionX, float *collisionY);
 
 /**
  *
@@ -275,7 +275,7 @@ void applyBallCollision(Object *ballObj, Object * target, float *collisionX, flo
  * @param collisionY
  * @param targetDistance
  */
-void pushOut(Object *playerObj, float collisionX, float collisionY, float targetDistance);
+void obj_pushOut(Object *playerObj, float collisionX, float collisionY, float targetDistance);
 
 /**
  * reflect ball
