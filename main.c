@@ -105,7 +105,7 @@ int updateScore(int ballID, int *teamPoint1st, int *teamPoint2nd, int *winningTe
 		}
 		else if (*teamPoint2nd == winningScore)
 		{
-			*winningTeam = 3;
+			*winningTeam = 2;
 			*teamPoint1st = 0;
 			*teamPoint2nd = 0;
 		}
@@ -518,7 +518,9 @@ int main(int argc, char *args[]) {
                 SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, 0, 0, SDL_FLIP_NONE);
             }
         }
-        SDL_Rect winPosition = {(SCREEN_WIDTH / 4 * winningTeam) - 100, 50, 200, 50};
+        int winPositionX = (SCREEN_WIDTH / 4 * winningTeam) - 100;
+        if (winningTeam == 2) winPositionX += (SCREEN_WIDTH / 4);
+        SDL_Rect winPosition = {winPositionX, 50, 200, 50};
         SDL_RenderCopyEx(renderer, winnerTexture, &background, &winPosition, 0, 0, SDL_FLIP_NONE);
 		SDL_DestroyTexture(winnerTexture);
 
