@@ -91,15 +91,46 @@ Object *createObject(int id,int W, int H, char* imagePath);
 Player *createPlayer(Object* object, int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
 /**
  * create ball
- * @param object : pointer to Object
- * @return ball
+ * @param object pointer to Object
+ * @return ball if create successful / NULL if not
  */
 Ball *createBall(Object * object);
+
+/**
+ * create wall
+ * @param object pointer to Object
+ * @return wall  if create successful / NULL if not
+ */
 Wall *createWall(Object * object);
+
+/**
+ *
+ * @param object pointer to Object
+ * @param ratio float ratio of object
+ * @return item if create successful / NULL if not
+ */
 Item *createItem(Object* object, float ratio);
+
+/**
+ * Create random items
+ * @param imagePath pointer to imagePath
+ * @param targetIndex  integer of the target index
+ * @param itemNum number of items
+ * @return newItem  if create successful / NULL if not
+ */
 Item *createRandomItem(char *imagePath, int targetIndex, int itemNum);
 
+/**
+ * free object
+ * @param object Choose pointer to object to free
+ */
 void freeObject(Object * object);
+
+/**
+ *  Remove item
+ * @param item Choose item to remove
+ * @param objects Choose pointer to object to free
+ */
 void removeItem(Item * item, struct objectList* objects);
 
 /**
@@ -148,7 +179,23 @@ bool setPlayerOnGround(Player *player);
  */
 bool isCircleCollided(Object *A, Object *B, float *collisionX, float *collisionY);
 
+/**
+ *
+ * @param circle Pointer to object circle
+ * @param rectangle Pointer to object rectangle
+ * @param collisionX Pointer to float collision X
+ * @param collisionY Pointer to float collision Y
+ * @return true if collided / false if not
+ */
 bool isWallCollided(Object *circle, Object *rectangle, float *collisionX, float *collisionY);
+
+/**
+ *
+ * @param X
+ * @param Y
+ * @param A
+ * @param B
+ */
 void getCollideXY(float *X, float *Y, Object* A, Object *B);
 
 /**
@@ -184,20 +231,59 @@ int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, floa
  */
 float distSquare(Object * source, Object * target);
 
+/**
+ * Apply effect on Wall depends on colliding with different object
+ * @param source pointer to source object
+ * @param target the object that collides with ball
+ * @param collisionX pointer to float collision X
+ * @param collisionY pointer to float collision Y
+ */
 void applyWallCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+
+/**
+ * Apply effect on Player depends on colliding with different object
+ * @param source pointer to source object
+ * @param target the object that collides with ball
+ * @param collisionX pointer to float collision X
+ * @param collisionY pointer to float collision Y
+ */
 void applyPlayerCollision(Object *source, Object *target, float *collisionX, float *collisionY);
+
+/**
+ * Apply effect on Item depends on colliding with different object
+ * @param itemObj pointer to ball object
+ * @param target  the object that collides with ball
+ * @param collisionX pointer to float collision X
+ * @param collisionY pointer to float collision Y
+ */
 void applyItemCollision(Object *itemObj, Object * target, float *collisionX, float *collisionY);
 
 /**
- * Apply reaction when the ball collide with other objects
- * @param ballObj the ball Object
- * @param target  the object that collides with the ball
- * @param collisionX
- * @param collisionY
+ * Apply effect on Ball depends on colliding with different object
+ * @param ballObj pointer to ball object
+ * @param target  the object that collides with ball
+ * @param collisionX pointer to float collision X
+ * @param collisionY pointer to float collision Y
  */
 void applyBallCollision(Object *ballObj, Object * target, float *collisionX, float *collisionY);
 
+/**
+ *
+ * @param playerObj
+ * @param collisionX
+ * @param collisionY
+ * @param targetDistance
+ */
 void pushOut(Object *playerObj, float collisionX, float collisionY, float targetDistance);
+
+/**
+ * reflect ball
+ * @param vectorX pointer to float vector X
+ * @param vectorY pointer to float vector Y
+ * @param normalX float X
+ * @param normalY float Y
+ * @return 0
+ */
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
 //float centerDistSquared(Object *source, Object *target);
 
