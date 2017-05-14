@@ -91,21 +91,21 @@ Object *obj_create(int id, int W, int H, char *imagePath);
  */
 Player *player_create(Object *object, int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
 /**
- * create ball 
+ * create a struct Ball
  * @param object pointer to already created object
  * @return ball if create successful / NULL if not
  */
 Ball *ball_create(Object *object);
 
 /**
- * create wall
+ * create a struct Wall
  * @param object pointer to Object
  * @return wall  if create successful / NULL if not
  */
 Wall *wall_create(Object *object);
 
 /**
- *
+ * create a struct Item
  * @param object pointer to Object
  * @param ratio float ratio of object
  * @return item if create successful / NULL if not
@@ -113,24 +113,24 @@ Wall *wall_create(Object *object);
 Item *item_create(Object *object, float ratio);
 
 /**
- * Create random items
+ * Create random a random item
  * @param imagePath pointer to imagePath
- * @param targetIndex  integer of the target index
+ * @param targetIndex index of the character that need to be replaced
  * @param itemNum number of items
  * @return newItem  if create successful / NULL if not
  */
 Item *item_createRandomly(char *imagePath, int targetIndex, int itemNum);
 
 /**
- * free object
- * @param object Choose pointer to object to free
+ * free the object along with its wrapper and image
+ * @param object pointer to object need to be freed
  */
 void obj_free(Object *object);
 
 /**
- *  Remove item
+ *  Remove item from the object list
  * @param item Choose item to remove
- * @param objects Choose pointer to object to free
+ * @param objects pointer to object need to be removed from object list
  */
 void item_removeFromList(Item *item, struct objectList *objects);
 
@@ -139,17 +139,10 @@ void item_removeFromList(Item *item, struct objectList *objects);
  * @param player : pointer to Player
  * @param veloX : float velocity X
  */
-void obj_setVeloX(Object *player, float veloX);
+void obj_setVeloX(Object *player, float veloX);\
 
 /**
- * set velocity Y for player
- * @param player : pointer to Player
- * @param veloY : float velocity Y
- */
-void setVeloY(Object *player, float veloY);
-
-/**
- * Update X and Y
+ * Update X and Y of an object
  * @param object : pointer to Object
  * @param newFrameTime : float of new frame time
  */
@@ -165,7 +158,7 @@ void obj_update(Object *object, float newFrameTime, int gravity);
 void player_move(Player *player, int left, int up, int right);
 
 /**
- * check if the two objects are collided
+ * check if the two circle objects are collided
  * @param A : pointer to object A
  * @param B : pointer to object B
  * @param X : pointer to collision pointX
@@ -174,7 +167,7 @@ void player_move(Player *player, int left, int up, int right);
 bool obj_areCirclesCollided(Object *A, Object *B, float *collisionX, float *collisionY);
 
 /**
- * check if a circle and a rectangle is collided or not
+ * check if a circle obj and a rectangle obj are collided or not
  * @param circle Pointer to object circle
  * @param rectangle Pointer to object rectangle
  * @param collisionX Pointer to float collision X
@@ -182,15 +175,6 @@ bool obj_areCirclesCollided(Object *A, Object *B, float *collisionX, float *coll
  * @return true if collided / false if not
  */
 bool obj_areCircleRectCollided(Object *circle, Object *rectangle, float *collisionX, float *collisionY);
-
-/**
- * get the collision point
- * @param X the collision point X
- * @param Y the collision point Y
- * @param A pointer to the Object A
- * @param B pointer to the Object B
- */
-void getCollideXY(float *X, float *Y, Object* A, Object *B);
 
 /**
  * check for collision between 2 objects and apply effect
@@ -207,15 +191,6 @@ void obj_checkCollision(Object *source, Object *target);
  */
 bool obj_isMovingCloser(Object *source, Object *target);
 
-/**
- *
- * @param vectorX : pointer to float vector X
- * @param vectorY : pointer to float vector Y
- * @param normalX : float normal X
- * @param normalY : float normal Y
- * @return 0
- */
-int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
 
 /**
  * find the distance square between the two objects using Pythagorean
@@ -279,6 +254,7 @@ void obj_pushOut(Object *playerObj, float collisionX, float collisionY, float ta
  * @return 0
  */
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
+
 //float centerDistSquared(Object *source, Object *target);
 
 #endif //GAME_PLAYER_H
