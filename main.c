@@ -508,6 +508,8 @@ int main(int argc, char *args[]) {
         SDL_RenderClear(renderer);  //// clear the last screen
         for (int k = 0; k < objects->size; ++k) {
             Object *currentObj = objects->data[k];
+            currentObj->positionRect.x = (int) ceil(currentObj->X);
+            currentObj->positionRect.y = (int) ceil(currentObj->Y);
             if (currentObj->type == OBJECT_BALL){
                 SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, rotation++, 0, SDL_FLIP_NONE);
             } else {

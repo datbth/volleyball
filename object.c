@@ -238,8 +238,6 @@ void updateXY(Object *object, float moveTime, int gravity) {
     if (object->type == OBJECT_PLAYER){
         ((Player*)(object->wrapper))->isCollided = false;
     }
-    object->positionRect.x = (int) ceil(object->X);
-    object->positionRect.y = (int) ceil(object->Y);
 //    printf("|%i| X%f Y%f velX%f velY%f \n  ", object->id, object->X, object->Y, object->veloX, object->veloY);
 }
 
