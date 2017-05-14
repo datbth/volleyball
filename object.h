@@ -71,16 +71,16 @@ typedef struct {
 
 /**
  * create Object
- * @param id : integer id
- * @param W : integer of Width
- * @param H : integer of Height
- * @param imagePath : pointer to string of char
+ * @param id : integer id of the new object
+ * @param W : integer Width of the new object
+ * @param H : integer of Height of the new object
+ * @param imagePath : string path to image of player
  * @return object
  */
 Object *obj_create(int id, int W, int H, char *imagePath);
 
 /**
- * create a struct Player
+ * create a struct Player 
  * @param object : pointer to Object
  * @param speedX : integer of speed
  * @param jumpHeight: height player can jump
@@ -91,8 +91,8 @@ Object *obj_create(int id, int W, int H, char *imagePath);
  */
 Player *player_create(Object *object, int speedX, int jumpHeight, SDL_Keycode up, SDL_Keycode left, SDL_Keycode right);
 /**
- * create ball
- * @param object pointer to Object
+ * create ball 
+ * @param object pointer to already created object
  * @return ball if create successful / NULL if not
  */
 Ball *ball_create(Object *object);
@@ -165,14 +165,7 @@ void obj_update(Object *object, float newFrameTime, int gravity);
 void player_move(Player *player, int left, int up, int right);
 
 /**
- *
- * @param player
- * @return
- */
-bool setPlayerOnGround(Player *player);
-
-/**
- * check if the two object is collided
+ * check if the two objects are collided
  * @param A : pointer to object A
  * @param B : pointer to object B
  * @param X : pointer to collision pointX
@@ -181,7 +174,7 @@ bool setPlayerOnGround(Player *player);
 bool obj_areCirclesCollided(Object *A, Object *B, float *collisionX, float *collisionY);
 
 /**
- *
+ * check if a circle and a rectangle is collided or not
  * @param circle Pointer to object circle
  * @param rectangle Pointer to object rectangle
  * @param collisionX Pointer to float collision X
@@ -191,11 +184,11 @@ bool obj_areCirclesCollided(Object *A, Object *B, float *collisionX, float *coll
 bool obj_areCircleRectCollided(Object *circle, Object *rectangle, float *collisionX, float *collisionY);
 
 /**
- *
- * @param X
- * @param Y
- * @param A
- * @param B
+ * get the collision point
+ * @param X the collision point X
+ * @param Y the collision point Y
+ * @param A pointer to the Object A
+ * @param B pointer to the Object B
  */
 void getCollideXY(float *X, float *Y, Object* A, Object *B);
 
@@ -225,7 +218,7 @@ bool obj_isMovingCloser(Object *source, Object *target);
 int reflectVectorAboutVector(float *vectorX, float *vectorY, float normalX, float normalY);
 
 /**
- * find the distance between the two objects using Pythagorean
+ * find the distance square between the two objects using Pythagorean
  * @param source : pointer to Object source
  * @param target : pointer to Object target
  * @return float hypotenuse^2
@@ -269,7 +262,7 @@ void item_applyCollision(Object *itemObj, Object *target, float *collisionX, flo
 void ball_applyCollision(Object *ballObj, Object *target, float *collisionX, float *collisionY);
 
 /**
- *
+ * push the current object backward the collision point 
  * @param playerObj
  * @param collisionX
  * @param collisionY
@@ -278,7 +271,7 @@ void ball_applyCollision(Object *ballObj, Object *target, float *collisionX, flo
 void obj_pushOut(Object *playerObj, float collisionX, float collisionY, float targetDistance);
 
 /**
- * reflect ball
+ * reflect ball vector base on the normal vector when collide
  * @param vectorX pointer to float vector X
  * @param vectorY pointer to float vector Y
  * @param normalX float X
