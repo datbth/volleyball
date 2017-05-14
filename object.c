@@ -44,6 +44,7 @@ Object *createObject(int id, int W, int H, char* imagePath){
     object->positionRect = rect;
     object->positionRect.w = W;
     object->positionRect.h = H;
+    object->isCollided = false;
     return object;
 }
 
@@ -97,7 +98,6 @@ Player *createPlayer(Object* object,int speedX, int jumpHeight, SDL_Keycode up, 
     player->speedX = speedX;
     player->jumpHeight = jumpHeight;
     player->isOnGround = false;
-    player->isCollided = false;
     return player;
 }
 
@@ -198,7 +198,7 @@ void updateXY(Object *object, float moveTime, int gravity) {
     moveTime /= 1000;
 
     // save old position
-    if (!((Player *)object->wrapper)->isCollided) {
+    if (!object->isCollided) {
         object->oldX = object->X;
         object->oldY = object->Y;
     }
@@ -236,7 +236,7 @@ void updateXY(Object *object, float moveTime, int gravity) {
     }
 
     if (object->type == OBJECT_PLAYER){
-        ((Player*)(object->wrapper))->isCollided = false;
+        object->isCollided = false;
     }
 //    printf("|%i| X%f Y%f velX%f velY%f \n  ", object->id, object->X, object->Y, object->veloX, object->veloY);
 }
@@ -315,7 +315,7 @@ void backToUncollidedPosition(Object *object){
 }
 
 void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, float *collisionY){
-    ((Player*)playerObj->wrapper)->isCollided = true;
+    playerObj->isCollided = true;
     switch (target->type) {
         case OBJECT_WALL:
             backToUncollidedPosition(playerObj);
@@ -344,7 +344,7 @@ void applyPlayerCollision(Object *playerObj, Object *target, float *collisionX, 
                 float targetCenterToCollisionY = *collisionY - (target->Y + target->H / 2);
                 if (targetCenterToCollisionY < 0) {
                     ((Player *) (playerObj->wrapper))->isOnGround = true;
-                    ((Player *) (playerObj->wrapper))->isCollided = false;
+                    playerObj->isCollided = false;
                 }
             }
             break;

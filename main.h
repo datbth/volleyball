@@ -6,8 +6,6 @@
 #define GAME_GLOBALVARIABLES_H
 #define SCREEN_FPS 60
 
-
-
 extern const int SCREEN_WIDTH;
 extern const int SCREEN_HEIGHT;
 extern Mix_Chunk *sounds[10];
@@ -60,12 +58,12 @@ void getScoreString(char *string, int teamPoint1st, int teamPoint2nd);
 
 /**
  *
- * @param ball pointer to Ball
+ * @param ballId integer, id of a ball object
  * @param teamPoint1st pointer to integer point team 1
  * @param teamPoint2nd pointer to integer point team 2
  * @param winningTeam pointer to integer win 
  */
-int updateScore(Ball *ball, int *teamPoint1st, int *teamPoint2nd, int *winningTeam);
+int updateScore(int ballId, int *teamPoint1st, int *teamPoint2nd, int *winningTeam);
 
 /**
  *

@@ -44,13 +44,14 @@ struct Object {
     enum ObjectType type;
     enum ShapeType shapeType;
     void (*applyCollision)(Object *A, Object *B, float *collisionX, float *collisionY);
+    bool isCollided;
 };
 
 typedef struct {
     Object *object;
     SDL_Keycode up, left, right;
     int speedX, jumpHeight;
-    bool isOnGround, isCollided, isTeamLeft;
+    bool isOnGround, isTeamLeft;
 } Player;
 
 typedef struct {

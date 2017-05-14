@@ -347,6 +347,7 @@ int main(int argc, char *args[]) {
 
 	//// SETUP IMAGE RENDERER
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	if (renderer == NULL) return 2;
 
 	//// SETUP FONT RENDERER
@@ -567,9 +568,9 @@ int main(int argc, char *args[]) {
 	Mix_FreeMusic(music); music = NULL;
 
 	//// QUIT SDL SUBSYSTEMS
-	Mix_Quit();
-	TTF_Quit();
-	IMG_Quit();
+//	Mix_Quit();
+//	TTF_Quit();
+//	IMG_Quit();
 	SDL_Quit();
 
 	return 0;
