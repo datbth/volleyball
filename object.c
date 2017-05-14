@@ -52,7 +52,6 @@ Object *createObject(int id, int W, int H, char* imagePath){
 void freeObject(Object * object){
     if(object != NULL){
         if(object->wrapper != NULL) {
-            printf("%d\n", object->type);
             switch (object->type){
                 case OBJECT_PLAYER:
                     free((Player*)(object->wrapper));

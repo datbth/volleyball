@@ -249,7 +249,7 @@ int findObjIDByType(struct objectList *objects, enum ObjectType targetType, int 
             else index--;
         }
     }
-    return NULL;
+    return -1;
 }
 
 bool isElemInArray(int* arr, int elem, int length){
@@ -393,7 +393,7 @@ int main(int argc, char *args[]) {
             gameQuit = 1;
         }
 	}
-    if (ballId == NULL) gameQuit = 1;
+    if (ballId < 0) gameQuit = 1;
 	srand((unsigned int) time(NULL));
     // Play sound when start / startover
     Mix_PlayChannel( -1, sounds[6], 0 );
