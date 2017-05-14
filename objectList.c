@@ -86,9 +86,13 @@ void al_free(struct objectList *list){
 }
 
 void al_print(struct objectList *list){
-    for (int i = 0; i < list->size; ++i) {
-        printf("object pointer %p id%i \n", list->data[i], list->data[i]->id);
+    printf("size %i/%icapacity \n", list->size, list->capacity);
+    for (int i = 0; i < list->capacity; ++i) {
+        Object * currentObj = list->data[i];
+        if (currentObj){
+            printf("object pointer %p id%i type%i\n", currentObj, currentObj->id, currentObj->type);
 //        printf("object pointer %p \n", list->data[i]);
+        }
     }
     printf("\n");
 }

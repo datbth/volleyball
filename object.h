@@ -17,8 +17,8 @@ struct objectList* objects;
 enum ObjectType {
     OBJECT_PLAYER,
     OBJECT_BALL,
-    OBJECT_ITEM,
     OBJECT_WALL,
+    OBJECT_ITEM,
 };
 
 enum ShapeType {
@@ -40,6 +40,7 @@ struct Object {
     float oldX, oldY;
     void * wrapper;
     SDL_Texture *image;
+    SDL_Rect positionRect;
     enum ObjectType type;
     enum ShapeType shapeType;
     void (*applyCollision)(Object *A, Object *B, float *collisionX, float *collisionY);

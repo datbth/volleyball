@@ -6,7 +6,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
-#include <SDL_ttf.h>
+//#include <SDL_ttf.h>
 #include <time.h>
 #include "object.h"
 #include "main.h"
@@ -23,11 +23,11 @@ char *fontPath = "../DejaVuSans-Bold.ttf";
 //int numObjects = 0;
 float timeScale = 1.0;
 Player *players[4];
-struct objectList *objects;
 int desiredPlayers = 2;
 int winningScore = 10;
 Mix_Chunk *sounds[10];
 bool hasIntro = false;
+SDL_Texture * introTexture[20];
 
 
 void resetPositions(int teamHasBall){
@@ -57,7 +57,6 @@ void resetPositions(int teamHasBall){
 				if (teamHasBall == 1) {
 					currentObj->X = players[0]->object->X + players[0]->object->W/2 - currentObj->W / 2;
 				} else if (teamHasBall == 2) {
-                    printf("objects->numPlayer/2+1 %i \n",objects->numPlayer/2+1);
 					currentObj->X = players[objects->numPlayer/2+(objects->numPlayer>2?1:0)]->object->X + players[0]->object->W/2 - currentObj->W / 2;
 				}
 				break;
@@ -73,8 +72,8 @@ void resetPositions(int teamHasBall){
 void getScoreString(char *string, int teamPoint1st, int teamPoint2nd){
 	int strMaxLen = 6;
 	char scoreString1[strMaxLen], scoreString2[strMaxLen];
-	snprintf(scoreString1, strMaxLen, "%d", teamPoint1st);
-	snprintf(scoreString2, strMaxLen, "%d", teamPoint2nd);
+	snprintf(scoreString1, (size_t) strMaxLen, "%d", teamPoint1st);
+	snprintf(scoreString2, (size_t) strMaxLen, "%d", teamPoint2nd);
 	strcat(scoreString1, "-");
 	strcat(scoreString1, scoreString2);
 	for (int i = 0; i < 6; ++i) {
@@ -82,14 +81,16 @@ void getScoreString(char *string, int teamPoint1st, int teamPoint2nd){
 	}
 }
 
-int updateScore(Ball *ball, int *teamPoint1st, int *teamPoint2nd, int *winningTeam){
+int updateScore(int ballID, int *teamPoint1st, int *teamPoint2nd, int *winningTeam){
+    Object * ballObj = objects->data[ballID];
     if (teamPoint1st == 0 && teamPoint2nd == 0){
         *winningTeam = 0;
     }
-	if(ball->object->Y >= SCREEN_HEIGHT-ball->object->H){
+	if(ballObj->Y >= SCREEN_HEIGHT-ballObj->H){
 //            printf("touch ground\n");
 		int teamHasBall = 0;
-		if(ball->object->X <SCREEN_WIDTH/2) {
+
+		if(ballObj->X <SCREEN_WIDTH/2) {
 			(*teamPoint2nd)++;
             teamHasBall = 1;
         } else {
@@ -127,16 +128,22 @@ SDL_Texture * renderText(char * text, SDL_Color color){
 }
 
 void showInstruction(SDL_Color color, int fontX, int fontY, SDL_Rect *background){
+    for (int l = 0; l < 20; ++l) {
+        if(introTexture[l]) SDL_DestroyTexture(introTexture[l]);
+    }
+    int counter = 0;
     char * shortcuts[] = {"Ctrl + R to reset position",
-                          "Ctrl + P to pause         ",
-                          "Ctrl + Q to quit          ",
+                          "Ctrl + P to pause             ",
+                          "Ctrl + Q to quit                ",
+                          "Ctrl + U to change mode ",
                           "ENTER to Start the Match  "};
-    for (int k = 0; k < 4; ++k) {
+//    SDL_Texture * shortcutsTexture = NULL;
+    for (int k = 0; k < 5; ++k) {
         SDL_Texture * shortcutsTexture = renderText(shortcuts[k], color);
+        introTexture[counter++] = shortcutsTexture;
         SDL_Rect shortcutPos = {SCREEN_WIDTH/2-fontY*10, fontY*2*(k+5), fontY*20, fontY*2};
         SDL_RenderCopyEx(renderer, shortcutsTexture, background, &shortcutPos, 0, 0, SDL_FLIP_NONE);
     }
-
 
     char * buttonList[] = {"  A  ", "  S  ", "  D  ",
                            "  B  ", "  N  ", "  M  ",
@@ -145,23 +152,21 @@ void showInstruction(SDL_Color color, int fontX, int fontY, SDL_Rect *background
     for (int i = 0; i < objects->numPlayer; ++i) {
         Object * currentObj = objects->data[i];
         if (desiredPlayers == 2 && i == 1) i = 2;
-        printf("%i\n", 3*objects->numPlayer);
         SDL_Rect wordPos = {(int) (currentObj->X - currentObj->W/2 - fontX*2.5),
                             (int) (currentObj->Y + currentObj->H/2 - fontY),
                             fontX, fontY};
         int tempPosY = wordPos.y;
-        printf("tempPosY %i wordPos%i", tempPosY, wordPos );
         for (int j = 0; j < 3; ++j) {
             SDL_Texture *buttonTexture = renderText(buttonList[i*3+j], color);
+            introTexture[counter++] = buttonTexture;
             wordPos.x +=  fontX*2;
             wordPos.y = (j==1)? tempPosY - currentObj->H/2 - fontY : tempPosY;
             SDL_RenderCopyEx(renderer, buttonTexture, background, &wordPos, 0, 0, SDL_FLIP_NONE);
         }
-        printf("\n");
     }
 }
 
-SDL_Texture *loadTexture(char *path) {
+SDL_Texture *loadTexture(char *path) 	{
 	SDL_Surface *loadedSurface = IMG_Load(path);    //  load PNG image
 	SDL_Texture *texture = NULL;
 
@@ -206,10 +211,11 @@ void togglePause() {
 }
 
 int handleKeys() {
-	if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_Q]) return 1;
+	if      (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_Q]) return 1;
 	else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_R]) return 2;
-	else if (currentKeyStates[SDL_SCANCODE_P] && currentKeyStates[SDL_SCANCODE_LCTRL]) return 3;
-    else if (currentKeyStates[SDL_SCANCODE_RETURN]) return 4;
+	else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_P]) return 3;
+	else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_U]) return 4;
+    else if (currentKeyStates[SDL_SCANCODE_RETURN]) return 5;
 
 	for (int i = 0; i < objects->numPlayer; ++i) {
 		Player *player = players[i];
@@ -236,22 +242,84 @@ void cleanItems(bool checkNeedRemove){
     }
 }
 
+int findObjIDByType(struct objectList *objects, enum ObjectType targetType, int index){
+    for (int i = 0; i < objects->size; ++i) {
+        if (objects->data[i]->type == targetType){
+            if (index == 0) return i;
+            else index--;
+        }
+    }
+    return NULL;
+}
+
 bool isElemInArray(int* arr, int elem, int length){
-	for (int i = 0; i < length; i++){
-		if (elem == arr[i]) return true;
-	}
-	return false;
+    for (int i = 0; i < length; i++){
+        if (elem == arr[i]) return true;
+    }
+    return false;
 }
 
 int getIntFromArray(char * array){
-	int counter = 0;
-	while (array[counter] != '\0'){
-		if (array[counter] == '0'){
-			return counter;
-		}
-		counter++;
-	}
-	return -1;
+    int counter = 0;
+    while (array[counter] != '\0'){
+        if (array[counter] == '0'){
+            return counter;
+        }
+        counter++;
+    }
+    return -1;
+}
+
+void cleanObjects(struct objectList *objects){
+    printf("free objects \n");
+    for (int m = 0; m < objects->size; ++m) {
+        Object *currentObj = objects->data[m];
+        if(currentObj){
+            printf("id: %i\n", currentObj->id);
+            freeObject(currentObj);
+        }
+    }
+    objects->size = 0;
+    objects->numPlayer = 0;
+    printf("\n");
+}
+
+void createGameObj(int desiredPlayers, struct objectList *objects){
+    //// CREATE PLAYER
+    SDL_Keycode keycode[] = {SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
+                             SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M,
+                             SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
+                             SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9};
+    char playerImagePath[] = "../pics/player0.png";
+    int targetIndex = getIntFromArray(playerImagePath);
+    for (int l = 0; l < desiredPlayers; l++) {
+        playerImagePath[targetIndex] += 1;
+        Object *object = createObject(objects->size, 100, 100, playerImagePath);
+        if(desiredPlayers == 2 ) l *= 2;
+
+        players[objects->numPlayer++] = createPlayer(object, 1000/desiredPlayers, 700, keycode[l*3+0], keycode[l*3+1], keycode[l*3+2]);
+        objAppend(objects, object);
+    }
+    //// CREATE BALL
+    Object *object_b1 = createObject(objects->size, 50, 50, "../pics/ball2.png");
+    createBall(object_b1);
+    objAppend(objects, object_b1);
+
+    //// CREATE WALL
+    //the height of the wall is 3 times player's height
+    Object *object_w1 = createObject(objects->size, 25, objects->data[0]->H * 3, "../pics/wall.png");
+    createWall(object_w1);
+    objAppend(objects, object_w1);
+}
+
+void toggleMode(int * desiredPlayer, struct objectList * objects, int *teamPoint1st, int *teamPoint2nd){
+    *teamPoint1st = 0, *teamPoint2nd = 0;
+    *desiredPlayer = *desiredPlayer == 2?4:2;
+    cleanItems(false);
+    cleanObjects(objects);
+    createGameObj(*desiredPlayer, objects);
+    hasIntro = false;
+    resetPositions(0);
 }
 
 int main(int argc, char *args[]) {
@@ -282,7 +350,10 @@ int main(int argc, char *args[]) {
 	if (renderer == NULL) return 2;
 
 	//// SETUP FONT RENDERER
-	if (TTF_Init() == -1) return 3;
+	if (TTF_Init() == -1) {
+		printf("can't initialize TTF loader%s \n", SDL_GetError());
+		return 3;
+	}
 	font = TTF_OpenFont(fontPath, 20);
 	if (font == NULL) {
 		printf("can't load font %s\n", SDL_GetError());
@@ -295,37 +366,16 @@ int main(int argc, char *args[]) {
 	getScoreString(scoreString, teamPoint1st, teamPoint2nd);
 	SDL_Color scoreColor = { 0, 255, 0, 255 };
 	SDL_Texture * scoreTexture = renderText(scoreString, scoreColor);
-	SDL_Texture *winnerTexture;
+	SDL_Texture * winnerTexture = NULL;
 
 
 	//// CREATE OBJECT ARRAYLIST
 	struct objectList *temp_objects = objCreate();
 	objects = temp_objects;
 
-	//// CREATE PLAYER
-	SDL_Keycode keycode[] = {SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
-							 SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M,
-							 SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
-							 SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9};
-	char playerImagePath[] = "../pics/player0.png";
-	int targetIndex = getIntFromArray(playerImagePath);
-	for (int l = 0; l < desiredPlayers; l++) {
-		playerImagePath[targetIndex] += 1;
-		Object *object = createObject(objects->size, 100, 100, playerImagePath);
-        if(desiredPlayers == 2 ) l *= 2;
-		players[objects->numPlayer++] = createPlayer(object, 1000/desiredPlayers, 675, keycode[l*3+0], keycode[l*3+1], keycode[l*3+2]);
-        objAppend(objects, object);
-	}
-	//// CREATE BALL
-	Object *object_b1 = createObject(objects->size, 50, 50, "../pics/ball2.png");
-	Ball *ball = createBall(object_b1);
-    objAppend(objects, object_b1);
-
-	//// CREATE WALL
-	//the height of the wall is 3 times player's height
-	Object *object_w1 = createObject(objects->size, 25, objects->data[0]->H * 3, "../pics/wall.png");
-	Wall *wall = createWall(object_w1);
-    objAppend(objects, object_w1);
+    //// CREATE GAME OBJECTS
+    createGameObj(desiredPlayers, objects);
+    int ballId = findObjIDByType(objects, OBJECT_BALL, 0);
 
 	//// SETUP ITEMS SPAWN
 	//    enum ItemType itemList[] = {};
@@ -336,10 +386,13 @@ int main(int argc, char *args[]) {
 
 
 	//// VALIDATE PLAYERS AND SET THEIR POSITIONS
-	int quit = 0;
-	for (int j = 0; j < objects->numPlayer; ++j){
-		if (players[j] == NULL || players[j]->object == NULL) quit = 1;
+	int gameQuit = 0;
+	for (int j = 0; j < objects->size; ++j){
+		if (objects->data[j] == NULL || (objects->data[j]->wrapper) == NULL) {
+            gameQuit = 1;
+        }
 	}
+    if (ballId == NULL) gameQuit = 1;
 	srand((unsigned int) time(NULL));
     // Play sound when start / startover
     Mix_PlayChannel( -1, sounds[6], 0 );
@@ -352,12 +405,12 @@ int main(int argc, char *args[]) {
 	int rotation = 0;
 
 	//// GAME LOOP
-	while (quit == 0){
+	while (gameQuit == 0){
 		//// GET KEY INPUT
 		do {
 			switch (handleKeys()){
 				case 1:
-					quit = 1;
+					gameQuit = 1;
 					break;
 				case 2:
 					resetPositions(0);
@@ -366,12 +419,19 @@ int main(int argc, char *args[]) {
 				case 3:
 					togglePause();
 					break;
+                case 4:
+                    toggleMode(&desiredPlayers, objects, &teamPoint1st, &teamPoint2nd);
+                    ballId = findObjIDByType(objects, OBJECT_BALL, 0);
+                    if(scoreTexture != NULL) SDL_DestroyTexture(scoreTexture);
+                    getScoreString(scoreString, teamPoint1st, teamPoint2nd);
+                    scoreTexture = renderText(scoreString, scoreColor);
+                    break;
 				default:
 					break;
 			}
 		}
 		while (SDL_PollEvent(&event) != 0);
-		if (event.type == SDL_QUIT) quit = 1;   // close on top right 'x'
+		if (event.type == SDL_QUIT) gameQuit = 1;   // close on top right 'x'
 
 		//// LOCK FPS
 		currentTime = SDL_GetTicks();
@@ -383,8 +443,6 @@ int main(int argc, char *args[]) {
 
 		//// SPAWN ITEM
 		if(currentTime - lastItemSpawnTime > itemSpawnTime*1000){
-//			printf("spawn item\n");
-//            Item * newItem = createItem(newObject, 1.5);
 			Item * newItem = createRandomItem(itemImagePath, itemImagePathIndex, 3);
 			if (newItem != NULL){
                 objAppend(objects, newItem->object);
@@ -423,8 +481,9 @@ int main(int argc, char *args[]) {
 			winningTeam = 0;
 		}
 
-        int teamHasBall = updateScore(ball, &teamPoint1st, &teamPoint2nd, &winningTeam);
+        int teamHasBall = updateScore(ballId, &teamPoint1st, &teamPoint2nd, &winningTeam);
 
+		if(winnerTexture != NULL) SDL_DestroyTexture(winnerTexture);
 		if (winningTeam > 0){
 			winnerTexture = renderText("Winner!", scoreColor);
 		} else{
@@ -438,6 +497,7 @@ int main(int argc, char *args[]) {
             cleanItems(false);
             resetPositions(teamHasBall);
             getScoreString(scoreString, teamPoint1st, teamPoint2nd);
+			if(scoreTexture != NULL) SDL_DestroyTexture(scoreTexture);
             scoreTexture = renderText(scoreString, scoreColor);
             SDL_Delay(1000);
             currentTime = SDL_GetTicks();
@@ -448,16 +508,15 @@ int main(int argc, char *args[]) {
         SDL_RenderClear(renderer);  //// clear the last screen
         for (int k = 0; k < objects->size; ++k) {
             Object *currentObj = objects->data[k];
-            SDL_Rect position = {(int) ceil(currentObj->X), (int) ceil(currentObj->Y), currentObj->W, currentObj->H};
-
             if (currentObj->type == OBJECT_BALL){
-                SDL_RenderCopyEx(renderer, currentObj->image, &background, &position, rotation++, 0, SDL_FLIP_NONE);
+                SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, rotation++, 0, SDL_FLIP_NONE);
             } else {
-                SDL_RenderCopyEx(renderer, currentObj->image, &background, &position, 0, 0, SDL_FLIP_NONE);
+                SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, 0, 0, SDL_FLIP_NONE);
             }
         }
         SDL_Rect winPosition = {(SCREEN_WIDTH / 4 * winningTeam) - 100, 50, 200, 50};
         SDL_RenderCopyEx(renderer, winnerTexture, &background, &winPosition, 0, 0, SDL_FLIP_NONE);
+		SDL_DestroyTexture(winnerTexture);
 
         SDL_Rect scorePosition = {SCREEN_WIDTH / 2 - 100, 0, 200, 50};
         SDL_RenderCopyEx(renderer, scoreTexture, &background, &scorePosition, 0, 0, SDL_FLIP_NONE);
@@ -472,10 +531,10 @@ int main(int argc, char *args[]) {
             currentTime = SDL_GetTicks();
         }
         if (!hasIntro){
-            while (handleKeys() != 4 ) {
+            while (handleKeys() != 5 ) {
                 SDL_PollEvent(&event);
                 if (event.type == SDL_QUIT) {
-                    quit = 1;
+                    gameQuit = 1;
                     break;
                 }
                 SDL_Delay(10);
@@ -488,25 +547,22 @@ int main(int argc, char *args[]) {
 	}
 
 	//// FREE RESOURCES AND CLOSE SDL
-	printf("free objects ");
-	for (int m = 0; m < objects->size; ++m) {
-		Object *currentObj = objects->data[m];
-		if(currentObj){
-			freeObject(currentObj);
-		}
-	}
-	printf("\n");
+    cleanObjects(objects);
 	al_free(objects);
 
+    for (int l = 0; l < 20; ++l) {
+        if(introTexture[l]) SDL_DestroyTexture(introTexture[l]);
+    }
+
+	TTF_CloseFont(font); font = NULL;
 	SDL_DestroyRenderer(renderer); renderer = NULL;
 	SDL_DestroyWindow(window); window = NULL;
-	TTF_CloseFont(font); font = NULL;
 
 	//// FREE SOUND
 	for (int i = 0; i < numSound; ++i){
 		Mix_FreeChunk(sounds[i]);sounds[i] = NULL;
 	}
-	Mix_FreeMusic(music); music=NULL;
+	Mix_FreeMusic(music); music = NULL;
 
 	//// QUIT SDL SUBSYSTEMS
 	Mix_Quit();
