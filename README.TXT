@@ -6,3 +6,4 @@ REFERENCE & CREDITS
     SDL2 tutorial lazyfoo.net/tutorials/SDL/
     clock icon www.flaticon.com/authors/madebyoliver
     arrow icon www.flaticon.com/authors/hadrien
+    background opengameart.org/content/abandon-city-seamless-background

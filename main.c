@@ -145,10 +145,10 @@ void showInstruction(SDL_Color color, int fontX, int fontY, SDL_Rect *background
         SDL_RenderCopyEx(renderer, shortcutsTexture, background, &shortcutPos, 0, 0, SDL_FLIP_NONE);
     }
 
-    char * buttonList[] = {"  A  ", "  S  ", "  D  ",
-                           "  B  ", "  N  ", "  M  ",
+    char * buttonList[] = {"  A  ", "  W  ", "  D  ",
+                           "  J  ", "  I  ", "  L  ",
                            "LEFT ", "  UP ", "RIGHT",
-                           "NUM_7", "NUM_8", "NUM_9",};
+                           "NUM_4", "NUM_8", "NUM_6",};
     for (int i = 0; i < objects->numPlayer; ++i) {
         Object * currentObj = objects->data[i];
         if (desiredPlayers == 2 && i == 1) i = 2;
@@ -286,10 +286,10 @@ void cleanObjects(struct objectList *objects){
 
 void createGameObj(int desiredPlayers, struct objectList *objects){
     //// CREATE PLAYER
-    SDL_Keycode keycode[] = {SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D,
-                             SDL_SCANCODE_N, SDL_SCANCODE_B, SDL_SCANCODE_M,
+    SDL_Keycode keycode[] = {SDL_SCANCODE_W, SDL_SCANCODE_A, SDL_SCANCODE_D,
+                             SDL_SCANCODE_I, SDL_SCANCODE_J, SDL_SCANCODE_L,
                              SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
-                             SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_7, SDL_SCANCODE_KP_9};
+                             SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_6};
     char playerImagePath[] = "../pics/player0.png";
     int targetIndex = getIntFromArray(playerImagePath);
     for (int l = 0; l < desiredPlayers; l++) {
@@ -324,6 +324,7 @@ void toggleMode(int * desiredPlayer, struct objectList * objects, int *teamPoint
 }
 
 int main(int argc, char *args[]) {
+	int gameQuit = 0;
 	//// START UP SDL AND CREATE WINDOW
 	SDL_Window *window = init();
 	if (window == NULL) return 1;
@@ -348,7 +349,7 @@ int main(int argc, char *args[]) {
 
 	//// SETUP IMAGE RENDERER
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	if (renderer == NULL) return 2;
 
 	//// SETUP FONT RENDERER
@@ -362,6 +363,7 @@ int main(int argc, char *args[]) {
 		return 3;
 	}
 
+
 	//// SETUP SCORE INDICATOR
 	int teamPoint1st = 0, teamPoint2nd = 0;
 	char scoreString[10];
@@ -370,14 +372,17 @@ int main(int argc, char *args[]) {
 	SDL_Texture * scoreTexture = renderText(scoreString, scoreColor);
 	SDL_Texture * winnerTexture = NULL;
 
+	//// SETUP BACKGROUND IMAGE
+	SDL_Texture * background_image = loadTexture("../pics/background.png");
+	if (background_image == NULL) gameQuit = 1;
 
 	//// CREATE OBJECT ARRAYLIST
 	struct objectList *temp_objects = objCreate();
 	objects = temp_objects;
 
-    //// CREATE GAME OBJECTS
-    createGameObj(desiredPlayers, objects);
-    int ballId = findObjIDByType(objects, OBJECT_BALL, 0);
+	//// CREATE GAME OBJECTS
+	createGameObj(desiredPlayers, objects);
+	int ballId = findObjIDByType(objects, OBJECT_BALL, 0);
 
 	//// SETUP ITEMS SPAWN
 	//    enum ItemType itemList[] = {};
@@ -388,15 +393,14 @@ int main(int argc, char *args[]) {
 
 
 	//// VALIDATE PLAYERS AND SET THEIR POSITIONS
-	int gameQuit = 0;
 	for (int j = 0; j < objects->size; ++j){
 		if (objects->data[j] == NULL || (objects->data[j]->wrapper) == NULL) {
-            gameQuit = 1;
-        }
+			gameQuit = 1;
+		}
 	}
-    if (ballId < 0) gameQuit = 1;
+	if (ballId < 0) gameQuit = 1;
 	srand((unsigned int) time(NULL));
-    // Play sound when start / startover
+	// Play sound when start / startover
     Mix_PlayChannel( -1, sounds[6], 0 );
 	resetPositions(0);
 
@@ -508,12 +512,14 @@ int main(int argc, char *args[]) {
 
         //// UPDATE UI
         SDL_RenderClear(renderer);  //// clear the last screen
-        for (int k = 0; k < objects->size; ++k) {
-            Object *currentObj = objects->data[k];
-            currentObj->positionRect.x = (int) ceil(currentObj->X);
-            currentObj->positionRect.y = (int) ceil(currentObj->Y);
-            if (currentObj->type == OBJECT_BALL){
-                SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, rotation++, 0, SDL_FLIP_NONE);
+		SDL_RenderCopyEx(renderer, background_image, &background, &background, 0, 0, SDL_FLIP_NONE);
+
+		for (int k = 0; k < objects->size; ++k) {
+			Object *currentObj = objects->data[k];
+			currentObj->positionRect.x = (int) ceil(currentObj->X);
+			currentObj->positionRect.y = (int) ceil(currentObj->Y);
+			if (currentObj->type == OBJECT_BALL){
+				SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, rotation++, 0, SDL_FLIP_NONE);
             } else {
                 SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, 0, 0, SDL_FLIP_NONE);
             }
