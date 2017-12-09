@@ -8,7 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${game_SOURCE_DIR}/findsdl2")
 
 ## For Mac
 #
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${game_SOURCE_DIR}/findsdl2")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${game_SOURCE_DIR}/findsdl2")
 #
 set(SOURCE_FILES main.c object.c objectList.c)
 add_executable(game ${SOURCE_FILES})
