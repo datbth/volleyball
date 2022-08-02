@@ -64,7 +64,7 @@ int itemImagePathIndex;
 float lastItemSpawnTime;
 int itemSpawnTime;
 
-float lastTime = 0, currentTime, nextGameTime = 0;
+float lastTime = 0, currentTime, nextInputTime = 0, nextGameTime = 0;
 int rotation = 0;
 
 void resetPositions(int teamHasBall)
@@ -507,10 +507,13 @@ void gameLoop()
 	do
 	{
 		int keySet = handleKeys();
-		// if (keySet > 0) {
-			// printf("keySet\n");
-			// nextGameTime = currentTime + 10;
-		// }
+		if (keySet > 0) {
+			if (nextInputTime > currentTime) {
+				break;
+			}
+			// avoid triggering too many events when the user does not release the keys fast enough
+			nextInputTime = currentTime + 500;
+		}
 		switch (keySet)
 		{
 		case 1:
@@ -519,11 +522,12 @@ void gameLoop()
 		case 2:
 			resetPositions(0);
 			cleanItems(false);
-			return;
+			break;
 		case 3:
 			togglePause();
-			return;
+			break;
 		case 4:
+			printf("change\n");
 			toggleMode(&desiredPlayers, objects, &teamPoint1st, &teamPoint2nd);
 			ballId = findObjIDByType(objects, OBJECT_BALL, 0);
 			if (scoreTexture != NULL)
