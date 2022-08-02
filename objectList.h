@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include "object.h"
 
-typedef struct Object Object;
-
 struct objectList {
     int numPlayer;
     int size;
@@ -34,6 +32,13 @@ bool objAppend(struct objectList *list, Object *newObj);
  * @return true if remove successfully / false if not remove successfully
  */
 bool al_remove(struct objectList *list, int position);
+
+/**
+ *  Remove item from the object list
+ * @param item Choose item to remove
+ * @param objects pointer to object need to be removed from object list
+ */
+void item_removeFromList(Item *item, struct objectList *objects);
 
 /**
  * free object

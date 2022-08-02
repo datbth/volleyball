@@ -10,7 +10,6 @@
 #include "stdbool.h"
 #include "math.h"
 #include "main.h"
-#include "objectList.h"
 /**
  * player-player: block each other
  * player-wall: block each other
@@ -150,11 +149,11 @@ Item *item_create(Object *object, float ratio) {
     return item;
 }
 
-Item *item_createRandomly(char *imagePath, int targetIndex, int itemNum){
+Item *item_createRandomly(int id, char *imagePath, int targetIndex){
     Item * newItem = NULL;
-    int randomPos = rand() % itemNum;
+    int randomPos = rand() % 3;
     imagePath[targetIndex] += randomPos+1;
-    Object * itemObj = obj_create(objects->size, 50, 50, imagePath);
+    Object * itemObj = obj_create(id, 50, 50, imagePath);
     imagePath[targetIndex] -= randomPos+1;
 
     if(itemObj == NULL) return NULL;
@@ -180,12 +179,6 @@ Item *item_createRandomly(char *imagePath, int targetIndex, int itemNum){
         default:break;
     }
     return newItem;
-}
-
-void item_removeFromList(Item *item, struct objectList *objects){
-    if(item == NULL) return;
-    al_remove(objects, item->object->id);
-    obj_free(item->object);
 }
 
 void obj_setVeloX(Object *player, float veloX) {

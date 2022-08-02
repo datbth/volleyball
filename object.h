@@ -10,9 +10,6 @@
 #include <SDL_image.h>
 #include <SDL.h>
 #include <stdbool.h>
-#include "objectList.h"
-
-struct objectList* objects;
 
 enum ObjectType {
     OBJECT_PLAYER,
@@ -114,25 +111,18 @@ Item *item_create(Object *object, float ratio);
 
 /**
  * Create random a random item
+ * @param id object id for the item
  * @param imagePath pointer to imagePath
  * @param targetIndex index of the character that need to be replaced
- * @param itemNum number of items
  * @return newItem  if create successful / NULL if not
  */
-Item *item_createRandomly(char *imagePath, int targetIndex, int itemNum);
+Item *item_createRandomly(int id, char *imagePath, int targetIndex);
 
 /**
  * free the object along with its wrapper and image
  * @param object pointer to object need to be freed
  */
 void obj_free(Object *object);
-
-/**
- *  Remove item from the object list
- * @param item Choose item to remove
- * @param objects pointer to object need to be removed from object list
- */
-void item_removeFromList(Item *item, struct objectList *objects);
 
 /**
  * set velocity X for player
