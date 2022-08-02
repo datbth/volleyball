@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "CODEOWNERS": "codeowners",
+    "time.h": "c"
+  }
+}

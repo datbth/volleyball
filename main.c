@@ -19,7 +19,7 @@ const Uint8 *currentKeyStates;
 const int gravity = 1500;
 
 TTF_Font *font;
-char *fontPath = "../DejaVuSans-Bold.ttf";
+char *fontPath = "./assets/DejaVuSans-Bold.ttf";
 //int numObjects = 0;
 float timeScale = 1.0;
 Player *players[4];
@@ -290,7 +290,7 @@ void createGameObj(int desiredPlayers, struct objectList *objects){
                              SDL_SCANCODE_I, SDL_SCANCODE_J, SDL_SCANCODE_L,
                              SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
                              SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_6};
-    char playerImagePath[] = "../pics/player0.png";
+    char playerImagePath[] = "./assets/pics/player0.png";
     int targetIndex = getIntFromArray(playerImagePath);
     for (int l = 0; l < desiredPlayers; l++) {
         playerImagePath[targetIndex] += 1;
@@ -302,13 +302,13 @@ void createGameObj(int desiredPlayers, struct objectList *objects){
         objAppend(objects, object);
     }
     //// CREATE BALL
-    Object *object_b1 = obj_create(objects->size, 50, 50, "../pics/ball2.png");
+    Object *object_b1 = obj_create(objects->size, 50, 50, "./assets/pics/ball2.png");
     ball_create(object_b1);
     objAppend(objects, object_b1);
 
     //// CREATE WALL
     //the height of the wall is 3 times player's height
-    Object *object_w1 = obj_create(objects->size, 25, objects->data[0]->H * 3, "../pics/wall.png");
+    Object *object_w1 = obj_create(objects->size, 25, objects->data[0]->H * 3, "./assets/pics/wall.png");
     wall_create(object_w1);
     objAppend(objects, object_w1);
 }
@@ -334,15 +334,15 @@ int main(int argc, char *args[]) {
 
 	// SETUP SOUNDS
 	int numSound = 0;
-	sounds[numSound++] = Mix_LoadWAV("../sounds/hit1.wav");     // 0
-	sounds[numSound++] = Mix_LoadWAV("../sounds/hit2.wav");     // 1
-	sounds[numSound++] = Mix_LoadWAV("../sounds/hit3.wav");     // 2
-	sounds[numSound++] = Mix_LoadWAV("../sounds/jump1.wav");    // 3
-	sounds[numSound++] = Mix_LoadWAV("../sounds/jump2.wav");    // 4
-	sounds[numSound++] = Mix_LoadWAV("../sounds/jump3.wav");    // 5
-	sounds[numSound++] = Mix_LoadWAV("../sounds/whistle.wav");  // 6
-	sounds[numSound++] = Mix_LoadWAV("../sounds/point.wav");    // 7
-	Mix_Music *music = Mix_LoadMUS("../sounds/sandstorm.mp3");
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/hit1.wav");     // 0
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/hit2.wav");     // 1
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/hit3.wav");     // 2
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/jump1.wav");    // 3
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/jump2.wav");    // 4
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/jump3.wav");    // 5
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/whistle.wav");  // 6
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/point.wav");    // 7
+	Mix_Music *music = Mix_LoadMUS("./assets/sounds/sandstorm.mp3");
 
 	//// SETUP CONTROLLER
 	currentKeyStates = SDL_GetKeyboardState(NULL);
@@ -373,7 +373,7 @@ int main(int argc, char *args[]) {
 	SDL_Texture * winnerTexture = NULL;
 
 	//// SETUP BACKGROUND IMAGE
-	SDL_Texture * background_image = loadTexture("../pics/background.png");
+	SDL_Texture * background_image = loadTexture("./assets/pics/background.png");
 	if (background_image == NULL) gameQuit = 1;
 
 	//// CREATE OBJECT ARRAYLIST
@@ -386,7 +386,7 @@ int main(int argc, char *args[]) {
 
 	//// SETUP ITEMS SPAWN
 	//    enum ItemType itemList[] = {};
-	char itemImagePath[] = "../pics/item0.png";
+	char itemImagePath[] = "./assets/pics/item0.png";
 	int itemImagePathIndex = getIntFromArray(itemImagePath);
 	float lastItemSpawnTime = SDL_GetTicks();
 	int itemSpawnTime = (rand() % 3) + 5;
