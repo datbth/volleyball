@@ -4,7 +4,7 @@
 
 #ifndef GAME_GLOBALVARIABLES_H
 #define GAME_GLOBALVARIABLES_H
-#define SCREEN_FPS 60
+#define SCREEN_FPS 240
 
 extern const int SCREEN_WIDTH;
 extern const int SCREEN_HEIGHT;

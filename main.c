@@ -6,7 +6,7 @@
 #include <SDL_image.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>
-//#include <SDL_ttf.h>
+#include <emscripten.h>
 #include <time.h>
 #include "objectList.h"
 #include "main.h"
@@ -19,17 +19,53 @@ const Uint8 *currentKeyStates;
 const int gravity = 1500;
 
 TTF_Font *font;
-char *fontPath = "../DejaVuSans-Bold.ttf";
+char *fontPath = "./assets/fonts/DejaVuSans-Bold.ttf";
 // int numObjects = 0;
 float timeScale = 1.0;
 Player *players[4];
 int desiredPlayers = 2;
 int winningScore = 10;
 Mix_Chunk *sounds[10];
-bool hasIntro = false;
+int numSound = 0;
+bool hadIntro = false;
 SDL_Texture *introTexture[20];
 
 struct objectList *objects;
+
+int gameQuit = 0;
+//// START UP SDL AND CREATE WINDOW
+SDL_Window *window;
+SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+
+SDL_Event event;
+
+// SETUP SOUNDS
+Mix_Music *music;
+
+//// SETUP SCORE INDICATOR
+int teamPoint1st = 0, teamPoint2nd = 0;
+char scoreString[10];
+SDL_Color scoreColor = {0, 255, 0, 255};
+SDL_Texture *scoreTexture;
+SDL_Texture *winnerTexture;
+
+//// SETUP BACKGROUND IMAGE
+SDL_Texture *background_image;
+
+//// CREATE GAME OBJECTS
+int ballId;
+int winningTeam = 0;
+int teamHasBall = 0;
+
+//// SETUP ITEMS SPAWN
+//    enum ItemType itemList[] = {};
+char itemImagePath[] = "./assets/pics/item0.png";
+int itemImagePathIndex;
+float lastItemSpawnTime;
+int itemSpawnTime;
+
+float lastTime = 0, currentTime, nextGameTime = 0;
+int rotation = 0;
 
 void resetPositions(int teamHasBall)
 {
@@ -264,25 +300,20 @@ void togglePause()
 
 int handleKeys()
 {
-	if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_Q])
-		return 1;
-	else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_R])
-		return 2;
-	else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_P])
-		return 3;
-	else if (currentKeyStates[SDL_SCANCODE_LCTRL] && currentKeyStates[SDL_SCANCODE_U])
-		return 4;
-	else if (currentKeyStates[SDL_SCANCODE_RETURN])
+	if (currentKeyStates[SDL_SCANCODE_LCTRL]) {
+		if (currentKeyStates[SDL_SCANCODE_Q]) {
+			return 1;
+		} else if (currentKeyStates[SDL_SCANCODE_R]) {
+			return 2;
+		} else if (currentKeyStates[SDL_SCANCODE_P]) {
+			return 3;
+		} else if (currentKeyStates[SDL_SCANCODE_U]) {
+			return 4;
+		}
+	} else if (currentKeyStates[SDL_SCANCODE_RETURN]) {
 		return 5;
-
-	for (int i = 0; i < objects->numPlayer; ++i)
-	{
-		Player *player = players[i];
-		player_move(player,
-								currentKeyStates[player->left],
-								currentKeyStates[player->up],
-								currentKeyStates[player->right]);
 	}
+
 	return 0;
 }
 
@@ -371,7 +402,7 @@ void createGameObj(int desiredPlayers, struct objectList *objects)
 													 SDL_SCANCODE_I, SDL_SCANCODE_J, SDL_SCANCODE_L,
 													 SDL_SCANCODE_UP, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT,
 													 SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_6};
-	char playerImagePath[] = "../pics/player0.png";
+	char playerImagePath[] = "./assets/pics/player0.png";
 	int targetIndex = getIntFromArray(playerImagePath);
 	for (int l = 0; l < desiredPlayers; l++)
 	{
@@ -385,13 +416,13 @@ void createGameObj(int desiredPlayers, struct objectList *objects)
 		objAppend(objects, object);
 	}
 	//// CREATE BALL
-	Object *object_b1 = obj_create(objects->size, 50, 50, "../pics/ball2.png");
+	Object *object_b1 = obj_create(objects->size, 50, 50, "./assets/pics/ball2.png");
 	ball_create(object_b1);
 	objAppend(objects, object_b1);
 
 	//// CREATE WALL
 	// the height of the wall is 3 times player's height
-	Object *object_w1 = obj_create(objects->size, 25, objects->data[0]->H * 3, "../pics/wall.png");
+	Object *object_w1 = obj_create(objects->size, 25, objects->data[0]->H * 3, "./assets/pics/wall.png");
 	wall_create(object_w1);
 	objAppend(objects, object_w1);
 }
@@ -403,32 +434,282 @@ void toggleMode(int *desiredPlayer, struct objectList *objects, int *teamPoint1s
 	cleanItems(false);
 	cleanObjects(objects);
 	createGameObj(*desiredPlayer, objects);
-	hasIntro = false;
+	hadIntro = false;
 	resetPositions(0);
+}
+
+void gameLoop()
+{
+	if (gameQuit == 1)
+	{
+		emscripten_cancel_main_loop();
+
+		//// FREE RESOURCES AND CLOSE SDL
+		cleanObjects(objects);
+		al_free(objects);
+
+		for (int l = 0; l < 20; ++l)
+		{
+			if (introTexture[l])
+				SDL_DestroyTexture(introTexture[l]);
+		}
+
+		TTF_CloseFont(font);
+		font = NULL;
+		SDL_DestroyRenderer(renderer);
+		renderer = NULL;
+		SDL_DestroyWindow(window);
+		window = NULL;
+
+		//// FREE SOUND
+		for (int i = 0; i < numSound; ++i)
+		{
+			Mix_FreeChunk(sounds[i]);
+			sounds[i] = NULL;
+		}
+		Mix_FreeMusic(music);
+		music = NULL;
+
+		//// QUIT SDL SUBSYSTEMS
+		//	Mix_Quit();
+		//	TTF_Quit();
+		//	IMG_Quit();
+		SDL_Quit();
+
+		return;
+	}
+
+	//// LOCK FPS
+	currentTime = SDL_GetTicks();
+	if (nextGameTime > 0) {
+		if (nextGameTime > currentTime) {
+			return;
+		} else {
+			// printf("next %f - %f\n", currentTime, nextGameTime);
+			resetPositions(teamHasBall);
+			nextGameTime = 0;
+			lastTime = currentTime;
+		}
+		// printf("ahuhu %f - %f\n", currentTime, nextGameTime);
+		// resetPositions(teamHasBall);
+		// nextGameTime = 0;
+		// teamHasBall = 0;
+	}
+	// printf("loop %f - %f\n", currentTime, nextGameTime);
+	// int actualTimePerFrame = (int)currentTime - (int)lastTime;
+	// if (actualTimePerFrame < TIME_PER_FRAME)
+	// {
+	// 	// SDL_Delay((Uint32)((int)TIME_PER_FRAME - actualTimePerFrame));
+	// 	return;
+	// }
+
+	//// GET KEY INPUT
+	do
+	{
+		int keySet = handleKeys();
+		// if (keySet > 0) {
+			// printf("keySet\n");
+			// nextGameTime = currentTime + 10;
+		// }
+		switch (keySet)
+		{
+		case 1:
+			gameQuit = 1;
+			break;
+		case 2:
+			resetPositions(0);
+			cleanItems(false);
+			return;
+		case 3:
+			togglePause();
+			return;
+		case 4:
+			toggleMode(&desiredPlayers, objects, &teamPoint1st, &teamPoint2nd);
+			ballId = findObjIDByType(objects, OBJECT_BALL, 0);
+			if (scoreTexture != NULL)
+				SDL_DestroyTexture(scoreTexture);
+			getScoreString(scoreString, teamPoint1st, teamPoint2nd);
+			scoreTexture = renderText(scoreString, scoreColor);
+			break;
+		case 5:
+			hadIntro = true;
+			if (nextGameTime > 0) {
+				nextGameTime = currentTime;
+			}
+			break;
+		default:
+			if (hadIntro) {
+				for (int i = 0; i < objects->numPlayer; ++i)
+				{
+					Player *player = players[i];
+					player_move(player,
+											currentKeyStates[player->left],
+											currentKeyStates[player->up],
+											currentKeyStates[player->right]);
+				}
+			}
+			break;
+		}
+	} while (SDL_PollEvent(&event) != 0);
+	if (event.type == SDL_QUIT)
+		gameQuit = 1; // close on top right 'x'
+
+	currentTime = SDL_GetTicks();
+
+	//// SPAWN ITEM
+	if (currentTime - lastItemSpawnTime > itemSpawnTime * 1000)
+	{
+		Item *newItem = item_createRandomly(objects->size, itemImagePath, itemImagePathIndex);
+		if (newItem != NULL)
+		{
+			objAppend(objects, newItem->object);
+			itemSpawnTime = (rand() % 3) + 5;
+			lastItemSpawnTime = currentTime;
+		}
+	}
+	//        al_print(objects);
+
+	//// UPDATE LOGIC POSITION
+	for (int i = 0; i < objects->size; ++i)
+	{
+		if (objects->data[i]->type == OBJECT_ITEM)
+			continue;
+		obj_update(objects->data[i], (currentTime - lastTime) * timeScale, gravity);
+	}
+
+	//// CHECK COLLISION AND CORRECT THEIR POSITIONS
+	// int checkedObjIndexes[objects->size];
+	// int numCheckedObj = 0;
+	for (int i = 0; i < objects->size - 1; i++)
+	{
+		for (int j = i + 1; j < objects->size; j++)
+		{
+			// if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj))
+			// {
+			// 	continue;
+			// }
+			//                printf("Checking %i and %i\n", i,j);
+			obj_checkCollision(objects->data[i], objects->data[j]);
+		}
+		// checkedObjIndexes[numCheckedObj++] = i + 1;
+	}
+	//// REMOVE ITEMS
+	cleanItems(true);
+
+	//// UPDATE SCORE, CHECK WINNER
+	if (teamPoint1st == 0 && teamPoint2nd == 0)
+	{
+		winningTeam = 0;
+	}
+
+	if (nextGameTime == 0) {
+		teamHasBall = updateScore(ballId, &teamPoint1st, &teamPoint2nd, &winningTeam);
+	}
+	// printf("score %i - %i - %i\n", teamPoint1st, teamPoint2nd, winningTeam);
+
+	if (winnerTexture != NULL)
+		SDL_DestroyTexture(winnerTexture);
+	if (winningTeam > 0)
+	{
+		winnerTexture = renderText("Winner!", scoreColor);
+	}
+	else
+	{
+		winnerTexture = renderText("", scoreColor);
+	}
+
+	// reset position and remove all remaining items
+	if (teamHasBall > 0)
+	{
+		Mix_PlayChannel(-1, sounds[6], 0);
+		cleanItems(false);
+		// resetPositions(teamHasBall);
+		getScoreString(scoreString, teamPoint1st, teamPoint2nd);
+		if (scoreTexture != NULL)
+			SDL_DestroyTexture(scoreTexture);
+		scoreTexture = renderText(scoreString, scoreColor);
+		// SDL_Delay(1000);
+		currentTime = SDL_GetTicks();
+		nextGameTime = currentTime + 1000;
+		printf("teamHasBall %f - %f \n", currentTime, nextGameTime);
+	};
+
+	//// UPDATE UI
+	SDL_RenderClear(renderer); //// clear the last screen
+	SDL_RenderCopyEx(renderer, background_image, &background, &background, 0, 0, SDL_FLIP_NONE);
+
+	for (int k = 0; k < objects->size; ++k)
+	{
+		Object *currentObj = objects->data[k];
+		currentObj->positionRect.x = (int)ceil(currentObj->X);
+		currentObj->positionRect.y = (int)ceil(currentObj->Y);
+		if (currentObj->type == OBJECT_BALL)
+		{
+			SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, rotation++, 0, SDL_FLIP_NONE);
+		}
+		else
+		{
+			SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, 0, 0, SDL_FLIP_NONE);
+		}
+	}
+	int winPositionX = (SCREEN_WIDTH / 4 * winningTeam) - 100;
+	if (winningTeam == 2)
+		winPositionX += (SCREEN_WIDTH / 4);
+	SDL_Rect winPosition = {winPositionX, 50, 200, 50};
+	SDL_RenderCopyEx(renderer, winnerTexture, &background, &winPosition, 0, 0, SDL_FLIP_NONE);
+	SDL_DestroyTexture(winnerTexture);
+
+	SDL_Rect scorePosition = {SCREEN_WIDTH / 2 - 100, 0, 200, 50};
+	SDL_RenderCopyEx(renderer, scoreTexture, &background, &scorePosition, 0, 0, SDL_FLIP_NONE);
+
+	if (!hadIntro)
+		showInstruction(scoreColor, 50, 20, &background);
+
+	//// RENDER
+	SDL_RenderPresent(renderer);
+
+	// if (!hadIntro)
+	// {
+	// 	while (handleKeys() != 5)
+	// 	{
+	// 		SDL_PollEvent(&event);
+	// 		if (event.type == SDL_QUIT)
+	// 		{
+	// 			gameQuit = 1;
+	// 			break;
+	// 		}
+	// 		SDL_Delay(10);
+	// 	}
+	// 	hadIntro = true;
+	// }
+	currentTime = SDL_GetTicks();
+
+	lastTime = currentTime;
+
+	if (winningTeam > 0)
+	{
+		printf("winningTeam %i\n", winningTeam);
+		nextGameTime = currentTime + 3000;
+	}
 }
 
 int main(int argc, char *args[])
 {
-	int gameQuit = 0;
 	//// START UP SDL AND CREATE WINDOW
-	SDL_Window *window = init();
+	window = init();
 	if (window == NULL)
 		return 1;
-	SDL_Rect background = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-
-	SDL_Event event;
 
 	// SETUP SOUNDS
-	int numSound = 0;
-	sounds[numSound++] = Mix_LoadWAV("../sounds/hit1.wav");		 // 0
-	sounds[numSound++] = Mix_LoadWAV("../sounds/hit2.wav");		 // 1
-	sounds[numSound++] = Mix_LoadWAV("../sounds/hit3.wav");		 // 2
-	sounds[numSound++] = Mix_LoadWAV("../sounds/jump1.wav");	 // 3
-	sounds[numSound++] = Mix_LoadWAV("../sounds/jump2.wav");	 // 4
-	sounds[numSound++] = Mix_LoadWAV("../sounds/jump3.wav");	 // 5
-	sounds[numSound++] = Mix_LoadWAV("../sounds/whistle.wav"); // 6
-	sounds[numSound++] = Mix_LoadWAV("../sounds/point.wav");	 // 7
-	Mix_Music *music = Mix_LoadMUS("../sounds/sandstorm.mp3");
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/hit1.wav");		 // 0
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/hit2.wav");		 // 1
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/hit3.wav");		 // 2
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/jump1.wav");	 // 3
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/jump2.wav");	 // 4
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/jump3.wav");	 // 5
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/whistle.wav"); // 6
+	sounds[numSound++] = Mix_LoadWAV("./assets/sounds/point.wav");	 // 7
+	music = Mix_LoadMUS("./assets/sounds/sandstorm.wav");
 
 	//// SETUP CONTROLLER
 	currentKeyStates = SDL_GetKeyboardState(NULL);
@@ -453,15 +734,12 @@ int main(int argc, char *args[])
 	}
 
 	//// SETUP SCORE INDICATOR
-	int teamPoint1st = 0, teamPoint2nd = 0;
-	char scoreString[10];
 	getScoreString(scoreString, teamPoint1st, teamPoint2nd);
-	SDL_Color scoreColor = {0, 255, 0, 255};
-	SDL_Texture *scoreTexture = renderText(scoreString, scoreColor);
-	SDL_Texture *winnerTexture = NULL;
+	scoreTexture = renderText(scoreString, scoreColor);
+	winnerTexture = NULL;
 
 	//// SETUP BACKGROUND IMAGE
-	SDL_Texture *background_image = loadTexture("../pics/background.png");
+	background_image = loadTexture("./assets/pics/background.png");
 	if (background_image == NULL)
 		gameQuit = 1;
 
@@ -471,14 +749,13 @@ int main(int argc, char *args[])
 
 	//// CREATE GAME OBJECTS
 	createGameObj(desiredPlayers, objects);
-	int ballId = findObjIDByType(objects, OBJECT_BALL, 0);
+	ballId = findObjIDByType(objects, OBJECT_BALL, 0);
 
 	//// SETUP ITEMS SPAWN
 	//    enum ItemType itemList[] = {};
-	char itemImagePath[] = "../pics/item0.png";
-	int itemImagePathIndex = getIntFromArray(itemImagePath);
-	float lastItemSpawnTime = SDL_GetTicks();
-	int itemSpawnTime = (rand() % 3) + 5;
+	itemImagePathIndex = getIntFromArray(itemImagePath);
+	lastItemSpawnTime = SDL_GetTicks();
+	itemSpawnTime = (rand() % 3) + 5;
 
 	//// VALIDATE PLAYERS AND SET THEIR POSITIONS
 	for (int j = 0; j < objects->size; ++j)
@@ -498,214 +775,8 @@ int main(int argc, char *args[])
 	//// PLAY SOUND WHEN START
 	Mix_PlayMusic(music, -1);
 
-	float lastTime = 0, currentTime;
-	int rotation = 0;
-
 	//// GAME LOOP
-	while (gameQuit == 0)
-	{
-		//// GET KEY INPUT
-		do
-		{
-			switch (handleKeys())
-			{
-			case 1:
-				gameQuit = 1;
-				break;
-			case 2:
-				resetPositions(0);
-				cleanItems(false);
-				break;
-			case 3:
-				togglePause();
-				break;
-			case 4:
-				toggleMode(&desiredPlayers, objects, &teamPoint1st, &teamPoint2nd);
-				ballId = findObjIDByType(objects, OBJECT_BALL, 0);
-				if (scoreTexture != NULL)
-					SDL_DestroyTexture(scoreTexture);
-				getScoreString(scoreString, teamPoint1st, teamPoint2nd);
-				scoreTexture = renderText(scoreString, scoreColor);
-				break;
-			default:
-				break;
-			}
-		} while (SDL_PollEvent(&event) != 0);
-		if (event.type == SDL_QUIT)
-			gameQuit = 1; // close on top right 'x'
-
-		//// LOCK FPS
-		currentTime = SDL_GetTicks();
-		int actualTimePerFrame = (int)currentTime - (int)lastTime;
-		if (actualTimePerFrame < TIME_PER_FRAME)
-		{
-			SDL_Delay((Uint32)((int)TIME_PER_FRAME - actualTimePerFrame));
-		}
-		currentTime = SDL_GetTicks();
-
-		//// SPAWN ITEM
-		if (currentTime - lastItemSpawnTime > itemSpawnTime * 1000)
-		{
-			Item *newItem = item_createRandomly(objects->size, itemImagePath, itemImagePathIndex);
-			if (newItem != NULL)
-			{
-				objAppend(objects, newItem->object);
-				itemSpawnTime = (rand() % 3) + 5;
-				lastItemSpawnTime = currentTime;
-			}
-		}
-		//        al_print(objects);
-
-		//// UPDATE LOGIC POSITION
-		for (int i = 0; i < objects->size; ++i)
-		{
-			if (objects->data[i]->type == OBJECT_ITEM)
-				continue;
-			obj_update(objects->data[i], (currentTime - lastTime) * timeScale, gravity);
-		}
-
-		//// CHECK COLLISION AND CORRECT THEIR POSITIONS
-		int checkedObjIndexes[objects->size];
-		int numCheckedObj = 0;
-		for (int i = 0; i < objects->size; ++i)
-		{
-			for (int j = 0; j < objects->size; j++)
-			{
-				if (i == j || isElemInArray(checkedObjIndexes, j + 1, numCheckedObj))
-				{
-					continue;
-				}
-				//                printf("Checking %i and %i\n", i,j);
-				obj_checkCollision(objects->data[i], objects->data[j]);
-			}
-			checkedObjIndexes[numCheckedObj++] = i + 1;
-		}
-		//// REMOVE ITEMS
-		cleanItems(true);
-
-		//// UPDATE SCORE, CHECK WINNER
-		int winningTeam;
-		if (teamPoint1st == 0 && teamPoint2nd == 0)
-		{
-			winningTeam = 0;
-		}
-
-		int teamHasBall = updateScore(ballId, &teamPoint1st, &teamPoint2nd, &winningTeam);
-
-		if (winnerTexture != NULL)
-			SDL_DestroyTexture(winnerTexture);
-		if (winningTeam > 0)
-		{
-			winnerTexture = renderText("Winner!", scoreColor);
-		}
-		else
-		{
-			winnerTexture = renderText("", scoreColor);
-		}
-
-		// reset position and remove all remaining items
-		if (teamHasBall > 0)
-		{
-			Mix_PlayChannel(-1, sounds[6], 0);
-			cleanItems(false);
-			resetPositions(teamHasBall);
-			getScoreString(scoreString, teamPoint1st, teamPoint2nd);
-			if (scoreTexture != NULL)
-				SDL_DestroyTexture(scoreTexture);
-			scoreTexture = renderText(scoreString, scoreColor);
-			SDL_Delay(1000);
-			currentTime = SDL_GetTicks();
-		};
-
-		//// UPDATE UI
-		SDL_RenderClear(renderer); //// clear the last screen
-		SDL_RenderCopyEx(renderer, background_image, &background, &background, 0, 0, SDL_FLIP_NONE);
-
-		for (int k = 0; k < objects->size; ++k)
-		{
-			Object *currentObj = objects->data[k];
-			currentObj->positionRect.x = (int)ceil(currentObj->X);
-			currentObj->positionRect.y = (int)ceil(currentObj->Y);
-			if (currentObj->type == OBJECT_BALL)
-			{
-				SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, rotation++, 0, SDL_FLIP_NONE);
-			}
-			else
-			{
-				SDL_RenderCopyEx(renderer, currentObj->image, &background, &currentObj->positionRect, 0, 0, SDL_FLIP_NONE);
-			}
-		}
-		int winPositionX = (SCREEN_WIDTH / 4 * winningTeam) - 100;
-		if (winningTeam == 2)
-			winPositionX += (SCREEN_WIDTH / 4);
-		SDL_Rect winPosition = {winPositionX, 50, 200, 50};
-		SDL_RenderCopyEx(renderer, winnerTexture, &background, &winPosition, 0, 0, SDL_FLIP_NONE);
-		SDL_DestroyTexture(winnerTexture);
-
-		SDL_Rect scorePosition = {SCREEN_WIDTH / 2 - 100, 0, 200, 50};
-		SDL_RenderCopyEx(renderer, scoreTexture, &background, &scorePosition, 0, 0, SDL_FLIP_NONE);
-
-		if (!hasIntro)
-			showInstruction(scoreColor, 50, 20, &background);
-
-		//// RENDER
-		SDL_RenderPresent(renderer);
-
-		if (winningTeam > 0)
-		{
-			SDL_Delay(2000);
-			currentTime = SDL_GetTicks();
-		}
-		if (!hasIntro)
-		{
-			while (handleKeys() != 5)
-			{
-				SDL_PollEvent(&event);
-				if (event.type == SDL_QUIT)
-				{
-					gameQuit = 1;
-					break;
-				}
-				SDL_Delay(10);
-			}
-			hasIntro = true;
-			currentTime = SDL_GetTicks();
-		}
-
-		lastTime = currentTime;
-	}
-
-	//// FREE RESOURCES AND CLOSE SDL
-	cleanObjects(objects);
-	al_free(objects);
-
-	for (int l = 0; l < 20; ++l)
-	{
-		if (introTexture[l])
-			SDL_DestroyTexture(introTexture[l]);
-	}
-
-	TTF_CloseFont(font);
-	font = NULL;
-	SDL_DestroyRenderer(renderer);
-	renderer = NULL;
-	SDL_DestroyWindow(window);
-	window = NULL;
-
-	//// FREE SOUND
-	for (int i = 0; i < numSound; ++i)
-	{
-		Mix_FreeChunk(sounds[i]);
-		sounds[i] = NULL;
-	}
-	Mix_FreeMusic(music);
-	music = NULL;
-
-	//// QUIT SDL SUBSYSTEMS
-	//	Mix_Quit();
-	//	TTF_Quit();
-	//	IMG_Quit();
-	SDL_Quit();
+	emscripten_set_main_loop(gameLoop, -1, 0);
 
 	return 0;
 }
