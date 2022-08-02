@@ -76,6 +76,12 @@ bool al_remove(struct objectList *list, int position){
     return true;
 }
 
+void item_removeFromList(Item *item, struct objectList *objects){
+    if(item == NULL) return;
+    al_remove(objects, item->object->id);
+    obj_free(item->object);
+}
+
 void al_free(struct objectList *list){
     if(list != NULL) {
         if(list->data != NULL){
